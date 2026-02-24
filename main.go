@@ -18,11 +18,17 @@ func main() {
 	mux := http.NewServeMux()
 	
 
-	fmt.Println("Server Running on http://localhost:8080")
+	fmt.Println("Server Running on http://localhost:8082")
 
 	mux.Handle("/users", middleware.Logging(http.HandlerFunc(handler.GetUsers)))
 	mux.Handle("/users/create", middleware.Logging(http.HandlerFunc(handler.CreateUser)))
 
-	http.ListenAndServe(":8080", mux)
+	// http.ListenAndServe(":8080", mux)
+
+port := ":8082" // change port
+err := http.ListenAndServe(port, mux)
+if err != nil {
+    fmt.Println("Server failed to start:", err)
+}
 
 }
