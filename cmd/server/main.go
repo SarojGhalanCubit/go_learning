@@ -14,7 +14,7 @@ import (
 
 
 func main() {
-
+	config.LoadEnv()
 	db := config.ConnectDB()
 	defer db.Close(context.Background())
 
@@ -29,14 +29,13 @@ func main() {
 
 	log.Println("Server Running on http://localhost:8082")
 
-	
 
 	mux.Handle("/users", middleware.Logging(http.HandlerFunc(handler.GetUsers)))
 	mux.Handle("/users/create", middleware.Logging(http.HandlerFunc(handler.CreateUser)))
 
 	// http.ListenAndServe(":8080", mux)
 
-	port := ":8082" // change port
+	port := config.GetPort() // change port
 	err := http.ListenAndServe(port, mux)
 	if err != nil {
     		log.Println("Server failed to start:", err)

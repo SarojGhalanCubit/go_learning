@@ -1,6 +1,7 @@
 package handler 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"go-minimal/internal/model"
 	"go-minimal/internal/service"
@@ -53,11 +54,12 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{
-			"error": "invalid Request Bodyk j",
+			"error": "invalid Request Body",
 		})
 
 		return
 	}
+	log.Println("err ",err)
 
 	if user.Name == "" {
 
@@ -78,7 +80,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return 
 	}
 
-
+	log.Println("USERS ",user)
 	created, err := h.service.CreateUser(user)
 
 	if err != nil {
