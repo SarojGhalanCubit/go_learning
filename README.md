@@ -18,6 +18,7 @@ This project demonstrates modern backend engineering practices using Go.
 ---
 
 ## 🏗 Project Architecture
+
 ```
 cmd/
 ├── server/
@@ -29,6 +30,7 @@ internal/
 ├── model/
 ├── repository/
 └── service/
+migrations/
 ```
 
 ### Layer Flow
@@ -46,7 +48,6 @@ Repository
 ↓
 PostgreSQL Database
 ```
-
 
 ---
 
@@ -79,7 +80,7 @@ Create a `.env` file in project root:
 DATABASE_URL=postgres://admin:admin123@localhost:5432/go_db
 PORT=8082
 
-````
+```
 
 ---
 
@@ -89,7 +90,7 @@ PORT=8082
 
 ```bash
 sudo systemctl stop postgresql
-````
+```
 
 ---
 
@@ -199,17 +200,17 @@ Request Body:
 
 ## 🔥 Development Tools Used
 
-* Air — Hot reload development
-* pgx — PostgreSQL driver
-* Middleware logging system
+- Air — Hot reload development
+- pgx — PostgreSQL driver
+- Middleware logging system
 
 ---
 
 ## ⚠️ Important Notes
 
-* Do not run system PostgreSQL and Docker PostgreSQL simultaneously.
-* Ensure port `5432` is free before starting database container.
-* Always use `.env` for sensitive configuration.
+- Do not run system PostgreSQL and Docker PostgreSQL simultaneously.
+- Ensure port `5432` is free before starting database container.
+- Always use `.env` for sensitive configuration.
 
 ---
 
@@ -222,6 +223,5 @@ Pull requests are welcome.
 ---
 
 ## ⭐ Author
+
 Saroj Ghalan
-
-

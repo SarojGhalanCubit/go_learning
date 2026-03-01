@@ -1,8 +1,8 @@
 package handler 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
+	"log"
 	"go-minimal/internal/model"
 	"go-minimal/internal/service"
 )
@@ -36,63 +36,29 @@ func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
-
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(map[string]string{
-			"error": "Method not allowed",
-		})
-
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	var user model.User
 
-	// Decode json
-	err := json.NewDecoder(r.Body).Decode(&user)
-
-	if err != nil {
-
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{
-			"error": "invalid Request Body",
-		})
-
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	log.Println("err ",err)
 
-	if user.Name == "" {
 
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{
-			"error": "Name is required",
-		})
-
-		return 
-	}
-
-	if user.Age < 18 {
-
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{
-			"error":"You are under age",
-		})
-		return 
-	}
-
-	log.Println("USERS ",user)
+	log.Println("user info :: ",user)
 	created, err := h.service.CreateUser(user)
 
-	if err != nil {
-		http.Error(w, "Database error", http.StatusInternalServerError)
-		return
-	}
-
-	// Response
+	// if err != nil {
+	// log.Println("CreateUser Error:", err) // Backend debugging
+	// 	http.Error(w, "Database error", http.StatusInternalServerError)
+	// 	return
+	// }
+	//
 	w.Header().Set("Content-Type","application/json")
 	w.WriteHeader(http.StatusCreated)
-
-
 	json.NewEncoder(w).Encode(created)
 
 }

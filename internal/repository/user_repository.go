@@ -51,8 +51,8 @@ func (r *UserRepository) GetAll() ([]model.User, error) {
 func (r *UserRepository) Create(user model.User) (model.User, error) {
 
 	query := `
-		INSERT INTO users (name, age, email,phone_number)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO users (name, age, email,phone_number,password)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id
 	`
 
@@ -65,6 +65,7 @@ func (r *UserRepository) Create(user model.User) (model.User, error) {
 		user.Age,
 		user.Email,
 		user.Phone,
+		user.Password,
 	).Scan(&user.ID)
 
 	if err != nil {
