@@ -19,11 +19,12 @@ func NewUserService(repo repository.UserRepositoryI) *UserService {
 	}
 }
 
-func (s *UserService) GetUsers() ([]model.User, error) {
+func (s *UserService) GetUsers() ([]model.UserResponse, error) {
 	return s.repo.GetAll()
 }
 
-func (s *UserService) CreateUser(user model.User) (model.User, error) {
+func (s *UserService) CreateUser(user model.User) (model.UserResponse, error) {
+
 	return s.repo.Create(user)
 }
 
