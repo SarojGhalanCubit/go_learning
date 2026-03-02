@@ -4,12 +4,11 @@ import (
 	"context"
 	"go-minimal/internal/model"
 	"github.com/jackc/pgx/v5"
-	"log"
 )
 
 type UserRepositoryI interface {
-	GetAll() ([]model.User, error)
-	Create(user model.User) (model.User, error)
+	GetAll() ([]model.UserResponse, error)
+	Create(user model.User) (model.UserResponse, error)
 }
 
 type UserRepository struct {
@@ -22,22 +21,22 @@ func NewUserRepository(db *pgx.Conn) *UserRepository {
 	}
 }
 
-func (r *UserRepository) GetAll() ([]model.User, error) {
+func (r *UserRepository) GetAll() ([]model.UserResponse, error) {
 
 	rows, err := r.db.Query(context.Background(),
-		"SELECT id, name, age FROM users")
+		"SELECT id, name, age, email, phone_number FROM users")
 
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var users []model.User
+	var users []model.UserResponse
 
 	for rows.Next() {
-		var user model.User
+		var user model.UserResponse
 
-		err := rows.Scan(&user.ID, &user.Name, &user.Age)
+		err := rows.Scan(&user.ID, &user.Name, &user.Age, &user.Email, &user.Phone)
 		if err != nil {
 			return nil, err
 		}
@@ -48,15 +47,15 @@ func (r *UserRepository) GetAll() ([]model.User, error) {
 	return users, nil
 }
 
-func (r *UserRepository) Create(user model.User) (model.User, error) {
+func (r *UserRepository) Create(user model.User) (model.UserResponse, error) {
+
+	var created model.UserResponse
 
 	query := `
 		INSERT INTO users (name, age, email,phone_number,password)
 		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id
+		RETURNING id, name, age,email,phone_number
 	`
-
-	log.Println("Server Running on http://localhost:8082")
 
 	err := r.db.QueryRow(
 		context.Background(),
@@ -66,11 +65,15 @@ func (r *UserRepository) Create(user model.User) (model.User, error) {
 		user.Email,
 		user.Phone,
 		user.Password,
-	).Scan(&user.ID)
+	).Scan(&created.ID,
+		&created.Name,
+		&created.Age,
+		&created.Email,
+		&created.Phone,)
 
 	if err != nil {
-		return user, err
+		return created, err
 	}
 
-	return user, nil
+	return created, nil
 }
