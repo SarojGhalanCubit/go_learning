@@ -52,6 +52,13 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w,http.StatusUnprocessableEntity,"Validation Error",userValidationErr)
 		return
 	}
+	
+	hashedPassword,err := utils.HashPassword(user.Password); if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "Password hashing failed",err.Error())
+		return
+	}
+
+	user.Password = hashedPassword
 
  	created, err := h.service.CreateUser(user)
     	if err != nil {
