@@ -2,9 +2,9 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"log"
 	"go-minimal/internal/model"
 	"go-minimal/internal/service"
+	"go-minimal/internal/utils"
 )
 
 
@@ -20,11 +20,12 @@ func NewUserHandler(service *service.UserService) *UserHandler {
 
 	return &UserHandler{service: service}
 }
+
 func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 
 	users, err := h.service.GetUsers()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.WriteError(w,http.StatusInternalServerError,err.Error(),"Internal Server Error")
 		return
 	}
 
@@ -34,31 +35,33 @@ func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
-
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		utils.WriteError(w,http.StatusMethodNotAllowed,"Invalid Method","Method Not Allowed")
 		return
 	}
 
 	var user model.User
 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+
+		utils.WriteError(w,http.StatusInternalServerError,"Create User failed","Invalid Request Body")
 		return
 	}
 
+	if userValidationErr := utils.ValidateUser(user.Name, user.Age, user.Phone,user.Email, user.Password); len(userValidationErr) > 0 {
+		utils.WriteError(w,http.StatusUnprocessableEntity,"Validation Error",userValidationErr)
+		return
+	}
 
-	log.Println("user info :: ",user)
-	created, err := h.service.CreateUser(user)
+ 	created, err := h.service.CreateUser(user)
+    	if err != nil {
+        	utils.WriteError(w, http.StatusInternalServerError, "Failed to create user", err.Error())
+        	return
+    	}	
 
-	// if err != nil {
-	// log.Println("CreateUser Error:", err) // Backend debugging
-	// 	http.Error(w, "Database error", http.StatusInternalServerError)
-	// 	return
-	// }
-	//
-	w.Header().Set("Content-Type","application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(created)
 
+	utils.WriteSuccess(w, http.StatusCreated,"User created successfully", created)
 }
+
+
+
