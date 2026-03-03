@@ -62,10 +62,20 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
  	created, err := h.service.CreateUser(user)
     	if err != nil {
-        	utils.WriteError(w, http.StatusInternalServerError, "Failed to create user", err.Error())
-        	return
-    	}	
+		if err.Error() == "email already exists" || err.Error() == "phone already exists" {
+			utils.WriteError(w,http.StatusConflict,"User creation failed",err.Error(),)
+		return
+	}
 
+	utils.WriteError(
+		w,
+		http.StatusInternalServerError,
+		"Internal server error",
+		nil,
+	)
+
+	return
+}	
 
 	utils.WriteSuccess(w, http.StatusCreated,"User created successfully", created)
 }
