@@ -25,13 +25,14 @@ func main() {
 
 
 	mux := http.NewServeMux()
-	
+
 
 	log.Println("Server Running on http://localhost:8082")
 
 
 	mux.Handle("/users", middleware.Logging(http.HandlerFunc(handler.GetUsers)))
-	mux.Handle("/users/create", middleware.Logging(http.HandlerFunc(handler.CreateUser)))
+	mux.Handle("/register", middleware.Logging(http.HandlerFunc(handler.CreateUser)))
+	mux.Handle("/login", middleware.Logging(http.HandlerFunc(handler.Login)))
 
 	// http.ListenAndServe(":8080", mux)
 
