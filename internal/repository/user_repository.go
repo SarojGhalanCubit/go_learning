@@ -11,6 +11,7 @@ import (
 type UserRepositoryI interface {
 	GetAll() ([]model.UserResponse, error)
 	Create(user model.User) (model.UserResponse, error)
+	FindByEmail(email string) (model.User,error)
 }
 
 type UserRepository struct {
@@ -105,3 +106,18 @@ func (r *UserRepository) Create(user model.User) (model.UserResponse, error) {
 
 	return created, nil
 }
+
+
+func (r *UserRepository) FindByEmail(email string) (model.User, error) {
+	var user model.User
+
+	query := `SELECT id,name,email,password FROM users WHERE email=$1`
+
+	err :=  r.db.QueryRow(context.Background(), query, email).Scan(&user.ID, &user.Name,&user.Email,&user.Password)
+
+	if err != nil {
+		return model.User{},err
+	}
+	return user, nil
+}
+
