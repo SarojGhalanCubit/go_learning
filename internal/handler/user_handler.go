@@ -30,9 +30,9 @@ func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	utils.WriteSuccess(w, http.StatusCreated,"User fetched successfully", users)
 	json.NewEncoder(w).Encode(users)
 }
-
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -80,5 +80,34 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	utils.WriteSuccess(w, http.StatusCreated,"User created successfully", created)
 }
 
+func (h* UserHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Email string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		utils.WriteError(w,http.StatusBadRequest,"Login Failed","Invalid Credentials" )
+		return
+	}
+
+
+	user,err := h.service.Login(input.Email,input.Password)
+	if err != nil {
+		utils.WriteError(w,http.StatusUnauthorized,"Login Failed","Invalid Credentials")
+		return
+	}
+token, err := utils.GenerateToken(user.ID)
+if err != nil {
+	utils.WriteError(w, http.StatusInternalServerError, "Token generation failed", err.Error())
+	return
+}
+
+utils.WriteSuccess(w, http.StatusOK, "Login successful", map[string]string{
+	"token": token,
+})
+
+}
 
 
