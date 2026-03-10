@@ -30,8 +30,7 @@ func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	utils.WriteSuccess(w, http.StatusCreated,"User fetched successfully", users)
-	json.NewEncoder(w).Encode(users)
+	utils.WriteSuccess(w, http.StatusOK,"User fetched successfully", users)
 }
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -81,6 +80,12 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h* UserHandler) Login(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost{
+		utils.WriteError(w, http.StatusMethodNotAllowed,"Invalid Method","Method not allowed")
+		return
+	}
+
 	var input struct {
 		Email string `json:"email"`
 		Password string `json:"password"`
@@ -89,6 +94,11 @@ func (h* UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
 		utils.WriteError(w,http.StatusBadRequest,"Login Failed","Invalid Credentials" )
+		return
+	}
+
+	if loginValidationErr := utils.ValidateLoginUser(input.Email,input.Password); len(loginValidationErr) > 0 {
+		utils.WriteError(w,http.StatusUnprocessableEntity, "Validation Error",loginValidationErr)
 		return
 	}
 
