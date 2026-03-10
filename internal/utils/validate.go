@@ -47,3 +47,18 @@ func ValidateUser(name string,age int,phone string, email string, password strin
 
 	return errors
 }
+
+
+func ValidateLoginUser(email , password string) map[string]string {
+	errors := make(map[string]string)
+
+	if strings.TrimSpace(email) == "" {
+		errors["email"] = "Email is required"
+	}
+
+	if strings.TrimSpace(password) == "" {
+		errors["password"] = "Password is required"
+	}
+
+	return  errors
+}
