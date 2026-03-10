@@ -29,8 +29,10 @@ func main() {
 
 	log.Println("Server Running on http://localhost:8082")
 
+// Private routes
+protected := middleware.AuthMiddleware(http.HandlerFunc(handler.GetUsers))
+mux.Handle("/users", protected)
 
-	mux.Handle("/users", middleware.Logging(http.HandlerFunc(handler.GetUsers)))
 	mux.Handle("/register", middleware.Logging(http.HandlerFunc(handler.CreateUser)))
 	mux.Handle("/login", middleware.Logging(http.HandlerFunc(handler.Login)))
 
