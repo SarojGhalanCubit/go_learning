@@ -3,15 +3,18 @@ package repository
 import (
 	"context"
 	"errors"
-	"github.com/jackc/pgx/v5/pgconn"
 	"go-minimal/internal/model"
+	"log"
+
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type UserRepositoryI interface {
 	GetAll() ([]model.UserResponse, error)
 	Create(user model.User) (model.UserResponse, error)
 	FindByEmail(email string) (model.User,error)
+	GetUserById(userID int) (model.UserResponse,error)
 }
 
 type UserRepository struct {
@@ -120,4 +123,23 @@ func (r *UserRepository) FindByEmail(email string) (model.User, error) {
 	}
 	return user, nil
 }
+
+
+func (r* UserRepository) GetUserById(userID int) (model.UserResponse, error) {
+	var user model.UserResponse
+
+	log.Println("USER ID ::: ",userID)
+
+	query := `SELECT id,name,age,email,phone_number FROM users WHERE id=$1`
+	
+	err := r.db.QueryRow(context.Background(), query, userID).Scan(&user.ID, &user.Name,&user.Age,&user.Email,&user.Phone)
+
+	if err != nil {
+		return model.UserResponse{}, errors.New("User not found")
+	}
+
+	return user,nil
+} 
+
+
 
