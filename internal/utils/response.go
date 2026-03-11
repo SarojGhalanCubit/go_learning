@@ -35,8 +35,8 @@ func WriteError(w http.ResponseWriter, status int, message string, err interface
 	response := APIResponse{
 		Success: false,
 		Status: status,
-		Message: message,
 		Error: err,
+		Message: message,
 	}
 
 	json.NewEncoder(w).Encode(response)
