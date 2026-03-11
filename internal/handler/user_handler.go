@@ -1,10 +1,13 @@
-package handler 
+package handler
+
 import (
 	"encoding/json"
-	"net/http"
+	"go-minimal/internal/middleware"
 	"go-minimal/internal/model"
 	"go-minimal/internal/service"
 	"go-minimal/internal/utils"
+	"log"
+	"net/http"
 )
 
 
@@ -22,6 +25,9 @@ func NewUserHandler(service *service.UserService) *UserHandler {
 }
 
 func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
+
+	userID := r.Context().Value(middleware.UserIDKey)
+	log.Println("USER ID :::: ",userID)
 
 	users, err := h.service.GetUsers()
 	if err != nil {
