@@ -8,6 +8,9 @@ import (
 	"go-minimal/internal/utils"
 	"log"
 	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 
@@ -68,7 +71,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
  	created, err := h.service.CreateUser(user)
     	if err != nil {
 		if err.Error() == "email already exists" || err.Error() == "phone already exists" {
-			utils.WriteError(w,http.StatusConflict,"User creation failed",err.Error(),)
+			utils.WriteError(w,http.StatusConflict,err.Error(),"User creation failed",)
 		return
 	}
 
@@ -80,8 +83,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	)
 
 	return
-}	
-
+	}	
 	utils.WriteSuccess(w, http.StatusCreated,"User created successfully", created)
 }
 
@@ -114,15 +116,46 @@ func (h* UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w,http.StatusUnauthorized,"Login Failed","Invalid Credentials")
 		return
 	}
-token, err := utils.GenerateToken(user.ID)
-if err != nil {
-	utils.WriteError(w, http.StatusInternalServerError, "Token generation failed", err.Error())
-	return
+	token, err := utils.GenerateToken(user.ID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "Token generation failed", err.Error())
+		return
+	}
+
+	utils.WriteSuccess(w, http.StatusOK, "Login successful", map[string]string{
+		"token": token,
+	})
+
 }
 
-utils.WriteSuccess(w, http.StatusOK, "Login successful", map[string]string{
-	"token": token,
-})
+
+func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(middleware.UserIDKey).(int)
+
+
+
+	IDstr := chi.URLParam(r, "id")
+	id,err := strconv.Atoi(IDstr)
+	if err != nil {
+		utils.WriteError(w,http.StatusNotFound, "Request Failed","Invalid user ID",)
+		return 
+	}
+	
+
+	log.Println("USER ID :::: ",userID)
+	log.Println("USER ID :::: ",id)
+	if userID != id {
+		utils.WriteError(w,http.StatusNotFound, "Reqeust Failed", "No Permission for different user")
+		return
+	}
+
+	user,err := h.service.GetUserByID(id)	
+	if err != nil {
+		utils.WriteError(w,http.StatusNotFound,"Request Failed",err.Error())
+		return
+	}
+
+	utils.WriteSuccess(w, http.StatusOK, "User fetched successfully", user)
 
 }
 
