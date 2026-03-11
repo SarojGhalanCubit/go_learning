@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"go-minimal/internal/config"
 	"go-minimal/internal/utils"
 	"net/http"
@@ -10,6 +11,9 @@ import (
 )
 
 var jwtSecret = []byte(config.GetJwtSecretKey())// later move to env variable
+type contextKey string
+
+const UserIDKey contextKey = "user_id"
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +33,12 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Optional: Extract user_id and put in context
-		next.ServeHTTP(w, r)
+		// Extract user_id and put in context
+		claims := token.Claims.(jwt.MapClaims)
+		userID := claims["user_id"]
+
+		ctx := context.WithValue(r.Context(), UserIDKey, userID)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
