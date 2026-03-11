@@ -6,8 +6,6 @@ import (
 	"go-minimal/internal/utils"
 	"net/http"
 	"strings"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
 var jwtSecret = []byte(config.GetJwtSecretKey())// later move to env variable
@@ -24,19 +22,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-			return jwtSecret, nil
-		})
-
-		if err != nil || !token.Valid {
-			utils.WriteError(w,http.StatusUnauthorized,"Invalid token","Unauthorized")
-			return
-		}
-
-		// Extract user_id and put in context
-		claims := token.Claims.(jwt.MapClaims)
-		userID := claims["user_id"]
-
+	userID, err := utils.GetUserIDFromToken(tokenString)
+	if err != nil {
+	utils.WriteError(w,http.StatusUnauthorized,"Invalid token", "Unauthorized")
+    	return
+	}	
 		ctx := context.WithValue(r.Context(), UserIDKey, userID)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
