@@ -47,4 +47,12 @@ func (s *UserService) Login(email, password string) (model.User,error) {
 	return user, nil
 }
 
+func (s *UserService) GetUserByID(userID int) (model.UserResponse, error) {
+	user,err:= s.repo.GetUserById(userID)
+    if err != nil {
+        return model.UserResponse{}, err
+    }
+    return user, nil
+}
+
 
