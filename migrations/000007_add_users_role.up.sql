@@ -1,0 +1,4 @@
+ALTER TABLE users
+ADD COLUMN role_id INT NOT NULL DEFAULT 2,
+ADD CONSTRAINT fk_role
+FOREIGN KEY (role_id) REFERENCES roles(id);
