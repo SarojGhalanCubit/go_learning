@@ -5,7 +5,6 @@ import (
 	"errors"
 	"go-minimal/internal/model"
 	"log"
-
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -30,7 +29,7 @@ func NewUserRepository(db *pgx.Conn) *UserRepository {
 func (r *UserRepository) GetAll() ([]model.UserResponse, error) {
 
 	rows, err := r.db.Query(context.Background(),
-		"SELECT id, name, age, email, phone_number FROM users")
+		"SELECT id, name, age, email, phone_number, role_id FROM users")
 
 	if err != nil {
 		return nil, err
@@ -42,7 +41,7 @@ func (r *UserRepository) GetAll() ([]model.UserResponse, error) {
 	for rows.Next() {
 		var user model.UserResponse
 
-		err := rows.Scan(&user.ID, &user.Name, &user.Age, &user.Email, &user.Phone)
+		err := rows.Scan(&user.ID, &user.Name, &user.Age, &user.Email, &user.Phone, &user.RoleID)
 		if err != nil {
 			return nil, err
 		}
@@ -58,9 +57,9 @@ func (r *UserRepository) Create(user model.User) (model.UserResponse, error) {
 	var created model.UserResponse
 
 	query := `
-		INSERT INTO users (name, age, email, phone_number, password)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, name, age, email, phone_number
+		INSERT INTO users (name, age, email, phone_number, password,role_id)
+		VALUES ($1, $2, $3, $4, $5,$6)
+		RETURNING id, name, age, email, phone_number, role_id
 	`
 
 	err := r.db.QueryRow(
@@ -71,12 +70,14 @@ func (r *UserRepository) Create(user model.User) (model.UserResponse, error) {
 		user.Email,
 		user.Phone,
 		user.Password,
+		user.RoleID,
 	).Scan(
 		&created.ID,
 		&created.Name,
 		&created.Age,
 		&created.Email,
 		&created.Phone,
+			&user.RoleID,
 	)
 
 	if err != nil {
