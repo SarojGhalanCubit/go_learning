@@ -115,9 +115,9 @@ func (r *UserRepository) Create(user model.User) (model.UserResponse, error) {
 func (r *UserRepository) FindByEmail(email string) (model.User, error) {
 	var user model.User
 
-	query := `SELECT id,name,email,password FROM users WHERE email=$1`
+	query := `SELECT id,name,email,password,role_id FROM users WHERE email=$1`
 
-	err :=  r.db.QueryRow(context.Background(), query, email).Scan(&user.ID, &user.Name,&user.Email,&user.Password)
+	err :=  r.db.QueryRow(context.Background(), query, email).Scan(&user.ID, &user.Name,&user.Email,&user.Password,&user.RoleID)
 
 	if err != nil {
 		return model.User{},err
@@ -131,9 +131,9 @@ func (r* UserRepository) GetUserById(userID int) (model.UserResponse, error) {
 
 	log.Println("USER ID ::: ",userID)
 
-	query := `SELECT id,name,age,email,phone_number FROM users WHERE id=$1`
+	query := `SELECT id,name,age,email,phone_number,role_id FROM users WHERE id=$1`
 	
-	err := r.db.QueryRow(context.Background(), query, userID).Scan(&user.ID, &user.Name,&user.Age,&user.Email,&user.Phone)
+	err := r.db.QueryRow(context.Background(), query, userID).Scan(&user.ID, &user.Name,&user.Age,&user.Email,&user.Phone,&user.RoleID)
 
 	if err != nil {
 		return model.UserResponse{}, errors.New("User not found")
