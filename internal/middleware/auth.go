@@ -12,6 +12,7 @@ var jwtSecret = []byte(config.GetJwtSecretKey())// later move to env variable
 type contextKey string
 
 const UserIDKey contextKey = "user_id"
+const RoleIDKey contextKey = "role_id"
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -21,14 +22,22 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
 	userID, err := utils.GetUserIDFromToken(tokenString)
 	if err != nil {
-	utils.WriteError(w,http.StatusUnauthorized,"Invalid token", "Unauthorized")
-    	return
+		utils.WriteError(w,http.StatusUnauthorized,"Invalid token", "Unauthorized")
+    		return
 	}	
-		ctx := context.WithValue(r.Context(), UserIDKey, userID)
 
-		next.ServeHTTP(w, r.WithContext(ctx))
+	roleID, err := utils.GetRoleIDFromToken(tokenString)
+	if err != nil {
+		utils.WriteError(w,http.StatusUnauthorized,"Invalid token", "Unauthorized")
+    		return
+	}	
+	ctx := context.WithValue(r.Context(), UserIDKey, userID)
+	ctx = context.WithValue(ctx, RoleIDKey, roleID)
+
+	next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
