@@ -37,7 +37,6 @@ func main() {
 	r.Use(chiMiddleware.Timeout(60 * 1e9)) // 60s timeout
 
 	// Public routes
-	r.Post("/register", handler.CreateUser)
 	r.Post("/login", handler.Login)
 
 
@@ -47,6 +46,7 @@ func main() {
 
 		r.Get("/users", handler.GetUsers)
 		r.Get("/users/{id}", handler.GetUserByID)
+	r.Post("/register", handler.CreateUser)
 	})
 	
 	log.Println("Server Running on http://localhost:8082")
