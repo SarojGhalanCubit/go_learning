@@ -9,7 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-
+	"go-minimal/internal/config"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -29,11 +29,9 @@ func NewUserHandler(service *service.UserService) *UserHandler {
 
 func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 
-	userID := r.Context().Value(middleware.UserIDKey)
-	log.Println("USER ID :::: ",userID)
-
 	users, err := h.service.GetUsers()
 	if err != nil {
+		log.Println("err : ",err)
 		utils.WriteError(w,http.StatusInternalServerError,err.Error(),"Internal Server Error")
 		return
 	}
@@ -43,8 +41,18 @@ func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	roleID := r.Context().Value(middleware.RoleIDKey).(int)
 	if r.Method != http.MethodPost {
 		utils.WriteError(w,http.StatusMethodNotAllowed,"Invalid Method","Method Not Allowed")
+		return
+	}
+
+	adminIDStr := config.GetAdminID()
+
+	adminId,err :=strconv.Atoi(adminIDStr)
+
+	if roleID != adminId {
+		utils.WriteError(w,http.StatusNotFound, "Reqeust Failed", "No Permission for different user")
 		return
 	}
 
@@ -116,7 +124,7 @@ func (h* UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w,http.StatusUnauthorized,"Login Failed","Invalid Credentials")
 		return
 	}
-	token, err := utils.GenerateToken(user.ID)
+	token, err := utils.GenerateToken(user.ID, user.RoleID)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "Token generation failed", err.Error())
 		return
@@ -131,8 +139,18 @@ func (h* UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(middleware.UserIDKey).(int)
+	roleID := r.Context().Value(middleware.RoleIDKey).(int)
 
 
+
+	adminIDStr := config.GetAdminID()
+
+	adminId,err :=strconv.Atoi(adminIDStr)
+
+	if roleID != adminId {
+		utils.WriteError(w,http.StatusNotFound, "Reqeust Failed", "No Permission for different user")
+		return
+	}
 
 	IDstr := chi.URLParam(r, "id")
 	id,err := strconv.Atoi(IDstr)
@@ -142,8 +160,6 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 	}
 	
 
-	log.Println("USER ID :::: ",userID)
-	log.Println("USER ID :::: ",id)
 	if userID != id {
 		utils.WriteError(w,http.StatusNotFound, "Reqeust Failed", "No Permission for different user")
 		return
