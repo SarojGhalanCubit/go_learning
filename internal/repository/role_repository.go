@@ -2,7 +2,6 @@ package repository
 
 import (
 	"go-minimal/internal/model"
-
 	"github.com/jackc/pgx/v5"
 )
 
