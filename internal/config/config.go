@@ -19,3 +19,6 @@ func GetPort() string {
 func GetJwtSecretKey() string {
 	return os.Getenv("JWT_SECRET_KEY")
 }
+func GetAdminID() string {
+	return os.Getenv("ADMIN_ID")
+}
