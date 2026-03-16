@@ -5,6 +5,7 @@ import (
 	"errors"
 	"go-minimal/internal/model"
 	"log"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -14,6 +15,8 @@ type UserRepositoryI interface {
 	Create(user model.User) (model.UserResponse, error)
 	FindByEmail(email string) (model.User,error)
 	GetUserById(userID int) (model.UserResponse,error)
+	UpdateUser(userID int,user model.UserResponse) (model.UserResponse,error)
+	DeleteUser(userID int) (model.UserResponse, error)
 }
 
 type UserRepository struct {
@@ -129,8 +132,6 @@ func (r *UserRepository) FindByEmail(email string) (model.User, error) {
 func (r* UserRepository) GetUserById(userID int) (model.UserResponse, error) {
 	var user model.UserResponse
 
-	log.Println("USER ID ::: ",userID)
-
 	query := `SELECT id,name,age,email,phone_number,role_id FROM users WHERE id=$1`
 	
 	err := r.db.QueryRow(context.Background(), query, userID).Scan(&user.ID, &user.Name,&user.Age,&user.Email,&user.Phone,&user.RoleID)
@@ -140,7 +141,87 @@ func (r* UserRepository) GetUserById(userID int) (model.UserResponse, error) {
 	}
 
 	return user,nil
-} 
+}
+
+func (r* UserRepository) UpdateUser(userID int,user model.UserResponse) (model.UserResponse, error) {
+
+	var updated model.UserResponse
+	
+	// Check if email is already exits
+	var exitingEmailID int
+	emailCheckQuery := `SELECT id from users WHERE email = $1 AND id != $2`
+	checkEmailErr := r.db.QueryRow(context.Background(), emailCheckQuery, user.Email, userID).Scan(&exitingEmailID)
+	
+	if checkEmailErr == nil {
+		// row found - email belongs to someone else
+		return updated, errors.New("email already exists")
+	}
+
+	log.Println("EMAIL CHEK ::: ",checkEmailErr)
+
+
+	// Check if phone number already exits
+	var existingPhoneId int
+	phoneCheckQuery := `SELECT id from users where phone_number = $1 AND id != $2`
+	checkPhoneErr := r.db.QueryRow(context.Background(),phoneCheckQuery, user.Phone, userID).Scan(&existingPhoneId)
+
+	if checkPhoneErr == nil {
+		return updated, errors.New("phone already exists")
+	}
+
+	query := `
+		UPDATE users 
+		SET name = $1, age = $2, email = $3, phone_number = $4
+		WHERE id = $5 
+		RETURNING id,name,age,email,phone_number,role_id
+	`
+	updateUserQueryErr := r.db.QueryRow(context.Background(),query, user.Name,user.Age,user.Email,user.Phone, userID).Scan(&updated.ID, &updated.Name,&updated.Age, &updated.Email, &updated.Phone, &updated.RoleID)
+
+	if updateUserQueryErr != nil {
+        if pgErr, ok := updateUserQueryErr.(*pgconn.PgError); ok {
+            switch pgErr.Code {
+            case "23505":
+                switch pgErr.ConstraintName {
+                case "user_email_unique":
+                    return updated, errors.New("email already exists")
+                case "user_phone_unique":
+                    return updated, errors.New("phone already exists")
+                default:
+                    return updated, errors.New("duplicate value")
+                }
+            case "23502":
+                return updated, errors.New("missing required field")
+            }
+        }
+        return updated, updateUserQueryErr
+    }
+
+	return updated, nil
+}
+
+func (r* UserRepository) DeleteUser(userID int)(model.UserResponse,error) {
+	
+
+	var deletedUser model.UserResponse
+	var id int
+	checkUserExistsQuery := `SELECT id FROM users WHERE id = $1`
+	checkUserExitsErr := r.db.QueryRow(context.Background(),checkUserExistsQuery,userID ).Scan(&id)
+	log.Println("IDDDDDD :: ",id,checkUserExitsErr,userID)
+	if checkUserExitsErr != nil {
+		return deletedUser, errors.New("User not found")
+	}
+
+	             
+
+	deleteUserQuery := `DELETE FROM users WHERE id = $1` 
+	deleteUserQueryErr := r.db.Exec(context.Background(),deleteUserQuery, userID).Scan(&deletedUser)
+	
+	if deleteUserQueryErr != nil {
+		return  deletedUser, errors.New("failed to delete user")
+	}
+
+	return deletedUser, nil 
+}
 
 
 

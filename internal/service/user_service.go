@@ -56,3 +56,12 @@ func (s *UserService) GetUserByID(userID int) (model.UserResponse, error) {
 }
 
 
+func (s *UserService) UpdateUser(userID int,user model.UserResponse) (model.UserResponse, error) {
+	return s.repo.UpdateUser(userID, user)
+}
+
+
+
+func (s *UserService) DeleteUser(userID int) (model.UserResponse, error) {
+	return s.repo.DeleteUser(userID)
+}

@@ -57,10 +57,10 @@ func GetRoleIDFromToken(tokenString string) (int, error) {
     }
 
     // ✅ MapClaims stores numbers as float64
-    roleIDFloat, ok := claims["role_id"].(float64)
+    userIDFloat, ok := claims["role_id"].(float64)
     if !ok {
-        return 0, errors.New("invalid role in token")
+        return 0, errors.New("invalid user_id in token")
     }
 
-    return int(roleIDFloat), nil // ✅ convert float64 → int
+    return int(userIDFloat), nil // ✅ convert float64 → int
 }

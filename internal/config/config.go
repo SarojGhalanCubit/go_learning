@@ -22,3 +22,9 @@ func GetJwtSecretKey() string {
 func GetAdminID() string {
 	return os.Getenv("ADMIN_ID")
 }
+func GetManagerID() string {
+	return os.Getenv("MANAGER_ID")
+}
+func GetUserID() string {
+	return os.Getenv("USER_ID")
+}

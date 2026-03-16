@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"go-minimal/internal/config"
 	"go-minimal/internal/middleware"
 	"go-minimal/internal/model"
 	"go-minimal/internal/service"
@@ -9,7 +10,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"go-minimal/internal/config"
+
 	"github.com/go-chi/chi/v5"
 )
 
@@ -41,18 +42,8 @@ func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	roleID := r.Context().Value(middleware.RoleIDKey).(int)
 	if r.Method != http.MethodPost {
 		utils.WriteError(w,http.StatusMethodNotAllowed,"Invalid Method","Method Not Allowed")
-		return
-	}
-
-	adminIDStr := config.GetAdminID()
-
-	adminId,err :=strconv.Atoi(adminIDStr)
-
-	if roleID != adminId {
-		utils.WriteError(w,http.StatusNotFound, "Reqeust Failed", "No Permission for different user")
 		return
 	}
 
@@ -139,30 +130,22 @@ func (h* UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(middleware.UserIDKey).(int)
-	roleID := r.Context().Value(middleware.RoleIDKey).(int)
-
-
-
-	adminIDStr := config.GetAdminID()
-
-	adminId,err :=strconv.Atoi(adminIDStr)
-
-	if roleID != adminId {
-		utils.WriteError(w,http.StatusNotFound, "Reqeust Failed", "No Permission for different user")
-		return
-	}
-
+	roleId := r.Context().Value(middleware.RoleIDKey).(int)
 	IDstr := chi.URLParam(r, "id")
 	id,err := strconv.Atoi(IDstr)
 	if err != nil {
 		utils.WriteError(w,http.StatusNotFound, "Request Failed","Invalid user ID",)
 		return 
 	}
-	
 
-	if userID != id {
-		utils.WriteError(w,http.StatusNotFound, "Reqeust Failed", "No Permission for different user")
-		return
+	adminIDStr := config.GetAdminID()
+	adminIDInt,err := strconv.Atoi(adminIDStr)
+	if roleId != adminIDInt{
+
+		if userID != id {
+			utils.WriteError(w,http.StatusNotFound, "Reqeust Failed", "No Permission for different user")
+			return
+		}
 	}
 
 	user,err := h.service.GetUserByID(id)	
@@ -172,6 +155,116 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteSuccess(w, http.StatusOK, "User fetched successfully", user)
+
+}
+
+func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPut{
+		utils.WriteError(w,http.StatusMethodNotAllowed,"Invalid Method","Method Not Allowed")
+		return
+	}
+
+	var user model.UserResponse
+
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		utils.WriteError(w,http.StatusInternalServerError,"Update User failed","Invalid Request Body")
+		return
+	}
+	
+	roleId := r.Context().Value(middleware.RoleIDKey).(int)
+	userID := r.Context().Value(middleware.UserIDKey).(int)
+
+	IDstr := chi.URLParam(r, "id")
+	id,err := strconv.Atoi(IDstr)
+	if err != nil {
+		utils.WriteError(w,http.StatusNotFound, "Request Failed","Invalid user ID",)
+		return 
+	}
+	
+
+	adminIDStr := config.GetAdminID()
+	adminIDInt,err := strconv.Atoi(adminIDStr)
+	if roleId != adminIDInt{
+
+		if userID != id {
+			utils.WriteError(w,http.StatusNotFound, "Reqeust Failed", "No Permission for different user")
+			return
+		}
+	}
+
+
+	if userValidationErr := utils.ValidateUpdateUser(user.Name, user.Age, user.Phone,user.Email); len(userValidationErr) > 0 {
+		utils.WriteError(w,http.StatusUnprocessableEntity,"Validation Error",userValidationErr)
+		return
+	}
+
+
+	updated, err := h.service.UpdateUser(id,user)
+	log.Println("UPDATE ERRROR ::: ",err)
+    	if err != nil {
+		if err.Error() == "email already exists" || err.Error() == "phone already exists" {
+			utils.WriteError(w,http.StatusConflict,err.Error(),"User creation failed",)
+		return
+	}
+
+	utils.WriteError(
+		w,
+		http.StatusInternalServerError,
+		"Internal server error",
+		nil,
+	)
+
+	return
+	}	
+	utils.WriteSuccess(w, http.StatusCreated,"User updated successfully", updated)
+}
+
+func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+
+	
+	userID := r.Context().Value(middleware.UserIDKey).(int)
+	roleId := r.Context().Value(middleware.RoleIDKey).(int)
+
+	if r.Method != http.MethodDelete{
+		utils.WriteError(w,http.StatusMethodNotAllowed,"Invalid Method","Method Not Allowed")
+		return
+	}
+
+
+
+	IDstr := chi.URLParam(r, "id")
+	id,err := strconv.Atoi(IDstr)
+	if err != nil {
+		utils.WriteError(w,http.StatusNotFound, "Request Failed","Invalid user ID",)
+		return 
+	}
+
+
+
+	adminIDStr := config.GetAdminID()
+	adminIDInt,err := strconv.Atoi(adminIDStr)
+	if roleId != adminIDInt{
+
+		if userID != id {
+			utils.WriteError(w,http.StatusNotFound, "Reqeust Failed", "No Permission for different user")
+			return
+		}
+	}
+
+	log.Println("PRINTER IDD :: ",id)
+	deletedUser,err := h.service.DeleteUser(id)
+
+
+
+	if err != nil {
+		utils.WriteError(w,http.StatusNotFound,"Request Failed",err.Error())
+		return
+	}
+
+	utils.WriteSuccess(w, http.StatusOK, "User fetched successfully", deletedUser)
+
+
 
 }
 

@@ -25,6 +25,8 @@ func ValidateUser(name string,age int,phone string, email string, password strin
 	// Phone Validation
 	if strings.TrimSpace(phone) == "" {
 		errors["phone_number"] = "Phone Number is required."
+	}else if len(strings.TrimSpace(phone)) < 10 {
+		errors["phone_number"] = "Phone number must contain 10 numbers"
 	}
 
 	// Email validation
@@ -43,6 +45,40 @@ func ValidateUser(name string,age int,phone string, email string, password strin
 		errors["password"] = "Password must contain at least one number"
 	} else if !strings.ContainsAny(password, "!@#$%^&*") {
 		errors["password"] = "Password must contain at least one special character (!@#$%^&*)"
+	}
+
+	return errors
+}
+
+func ValidateUpdateUser(name string, age int, phone string, email string) map[string]string {
+	errors:= make(map[string]string)
+
+
+	// Name validation 
+	if strings.TrimSpace(name) == "" {
+		errors["name"] = "Name is required"
+	}else if len(strings.TrimSpace(name)) < 2 {
+		errors["name"] = "Name must be at least 2 characters"
+	}
+
+	// Age validation 
+	if age < 18 {
+		errors["age"] = "Age must be greater than 18"
+	}
+
+	// Phone Validation 
+	if strings.TrimSpace(phone) == "" {
+		errors["phone_number"] = "Phone Number is required"
+	}else if len(strings.TrimSpace(phone)) > 10 {
+
+		errors["phone_number"] = "Phone number must contain 10 numbers"
+	}
+
+	// Email validation
+	if strings.TrimSpace(email) == "" {
+		errors["email"] = "Email is required"
+	} else if !emailRegex.MatchString(email) {
+		errors["email"] = "Invalid email format"
 	}
 
 	return errors
