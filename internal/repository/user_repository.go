@@ -13,9 +13,10 @@ import (
 type UserRepositoryI interface {
 	GetAll() ([]model.UserResponse, error)
 	Create(user model.User) (model.UserResponse, error)
-	FindByEmail(email string) (model.User,error)
-	GetUserById(userID int) (model.UserResponse,error)
-	UpdateUser(userID int,user model.UserResponse) (model.UserResponse,error)
+	FindByEmail(email string) (model.User, error)
+	FindByUserID(userID int) (model.UserResponse, error)
+	GetUserById(userID int) (model.UserResponse, error)
+	UpdateUser(userID int, user model.UserResponse) (model.UserResponse, error)
 	DeleteUser(userID int) (model.UserResponse, error)
 }
 
@@ -80,7 +81,7 @@ func (r *UserRepository) Create(user model.User) (model.UserResponse, error) {
 		&created.Age,
 		&created.Email,
 		&created.Phone,
-			&user.RoleID,
+		&created.RoleID,
 	)
 
 	if err != nil {
@@ -114,56 +115,65 @@ func (r *UserRepository) Create(user model.User) (model.UserResponse, error) {
 	return created, nil
 }
 
-
 func (r *UserRepository) FindByEmail(email string) (model.User, error) {
 	var user model.User
 
 	query := `SELECT id,name,email,password,role_id FROM users WHERE email=$1`
 
-	err :=  r.db.QueryRow(context.Background(), query, email).Scan(&user.ID, &user.Name,&user.Email,&user.Password,&user.RoleID)
+	err := r.db.QueryRow(context.Background(), query, email).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.RoleID)
 
 	if err != nil {
-		return model.User{},err
+		return model.User{}, err
 	}
 	return user, nil
 }
 
+func (r *UserRepository) FindByUserID(userID int) (model.UserResponse, error) {
+	var user model.UserResponse
+	query := `SELECT id,name,email,password,role_id FROM users WHERE id=$1`
 
-func (r* UserRepository) GetUserById(userID int) (model.UserResponse, error) {
+	err := r.db.QueryRow(context.Background(), query, userID).Scan(&user.ID, &user.Name, &user.Email, &user.Phone, &user.RoleID)
+
+	log.Println("I am called or not", err)
+
+	if err != nil {
+		return model.UserResponse{}, err
+	}
+	return user, nil
+}
+
+func (r *UserRepository) GetUserById(userID int) (model.UserResponse, error) {
 	var user model.UserResponse
 
 	query := `SELECT id,name,age,email,phone_number,role_id FROM users WHERE id=$1`
-	
-	err := r.db.QueryRow(context.Background(), query, userID).Scan(&user.ID, &user.Name,&user.Age,&user.Email,&user.Phone,&user.RoleID)
+
+	err := r.db.QueryRow(context.Background(), query, userID).Scan(&user.ID, &user.Name, &user.Age, &user.Email, &user.Phone, &user.RoleID)
 
 	if err != nil {
 		return model.UserResponse{}, errors.New("User not found")
 	}
 
-	return user,nil
+	return user, nil
 }
 
-func (r* UserRepository) UpdateUser(userID int,user model.UserResponse) (model.UserResponse, error) {
+func (r *UserRepository) UpdateUser(userID int, user model.UserResponse) (model.UserResponse, error) {
 
 	var updated model.UserResponse
-	
+
 	// Check if email is already exits
 	var exitingEmailID int
 	emailCheckQuery := `SELECT id from users WHERE email = $1 AND id != $2`
 	checkEmailErr := r.db.QueryRow(context.Background(), emailCheckQuery, user.Email, userID).Scan(&exitingEmailID)
-	
+
 	if checkEmailErr == nil {
 		// row found - email belongs to someone else
 		return updated, errors.New("email already exists")
 	}
 
-	log.Println("EMAIL CHEK ::: ",checkEmailErr)
-
-
 	// Check if phone number already exits
 	var existingPhoneId int
 	phoneCheckQuery := `SELECT id from users where phone_number = $1 AND id != $2`
-	checkPhoneErr := r.db.QueryRow(context.Background(),phoneCheckQuery, user.Phone, userID).Scan(&existingPhoneId)
+	checkPhoneErr := r.db.QueryRow(context.Background(), phoneCheckQuery, user.Phone, userID).Scan(&existingPhoneId)
 
 	if checkPhoneErr == nil {
 		return updated, errors.New("phone already exists")
@@ -171,57 +181,51 @@ func (r* UserRepository) UpdateUser(userID int,user model.UserResponse) (model.U
 
 	query := `
 		UPDATE users 
-		SET name = $1, age = $2, email = $3, phone_number = $4
-		WHERE id = $5 
+		SET name = $1, age = $2, email = $3, phone_number = $4,role_id = $5
+		WHERE id = $6
 		RETURNING id,name,age,email,phone_number,role_id
 	`
-	updateUserQueryErr := r.db.QueryRow(context.Background(),query, user.Name,user.Age,user.Email,user.Phone, userID).Scan(&updated.ID, &updated.Name,&updated.Age, &updated.Email, &updated.Phone, &updated.RoleID)
+	updateUserQueryErr := r.db.QueryRow(context.Background(), query, user.Name, user.Age, user.Email, user.Phone, user.RoleID, userID).Scan(&updated.ID, &updated.Name, &updated.Age, &updated.Email, &updated.Phone, &updated.RoleID)
 
 	if updateUserQueryErr != nil {
-        if pgErr, ok := updateUserQueryErr.(*pgconn.PgError); ok {
-            switch pgErr.Code {
-            case "23505":
-                switch pgErr.ConstraintName {
-                case "user_email_unique":
-                    return updated, errors.New("email already exists")
-                case "user_phone_unique":
-                    return updated, errors.New("phone already exists")
-                default:
-                    return updated, errors.New("duplicate value")
-                }
-            case "23502":
-                return updated, errors.New("missing required field")
-            }
-        }
-        return updated, updateUserQueryErr
-    }
+		if pgErr, ok := updateUserQueryErr.(*pgconn.PgError); ok {
+			switch pgErr.Code {
+			case "23505":
+				switch pgErr.ConstraintName {
+				case "user_email_unique":
+					return updated, errors.New("email already exists")
+				case "user_phone_unique":
+					return updated, errors.New("phone already exists")
+				default:
+					return updated, errors.New("duplicate value")
+				}
+			case "23502":
+				return updated, errors.New("missing required field")
+			}
+		}
+		return updated, updateUserQueryErr
+	}
 
 	return updated, nil
 }
 
-func (r* UserRepository) DeleteUser(userID int)(model.UserResponse,error) {
-	
+func (r *UserRepository) DeleteUser(userID int) (model.UserResponse, error) {
 
 	var deletedUser model.UserResponse
-	var id int
-	checkUserExistsQuery := `SELECT id FROM users WHERE id = $1`
-	checkUserExitsErr := r.db.QueryRow(context.Background(),checkUserExistsQuery,userID ).Scan(&id)
-	log.Println("IDDDDDD :: ",id,checkUserExitsErr,userID)
-	if checkUserExitsErr != nil {
-		return deletedUser, errors.New("User not found")
-	}
 
-	             
+	log.Println("Attempting to delete userID:", userID) // ✅ add this
 
-	deleteUserQuery := `DELETE FROM users WHERE id = $1` 
-	deleteUserQueryErr := r.db.Exec(context.Background(),deleteUserQuery, userID).Scan(&deletedUser)
-	
+	deleteUserQuery := ` DELETE FROM users WHERE id = $1 RETURNING id, name, age, email, phone_number, role_id
+    `
+	deleteUserQueryErr := r.db.QueryRow(context.Background(), deleteUserQuery, userID).Scan(&deletedUser.ID, &deletedUser.Name,
+		&deletedUser.Age,
+		&deletedUser.Email,
+		&deletedUser.Phone,
+		&deletedUser.RoleID,
+	)
+	log.Println("DELETE USER QUERY ERROR :: ", deleteUserQueryErr)
 	if deleteUserQueryErr != nil {
-		return  deletedUser, errors.New("failed to delete user")
+		return deletedUser, errors.New("failed to delete user")
 	}
-
-	return deletedUser, nil 
+	return deletedUser, nil
 }
-
-
-
