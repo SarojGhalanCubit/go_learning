@@ -4,6 +4,7 @@ import (
 	"errors"
 	"go-minimal/internal/model"
 	"go-minimal/internal/repository"
+	"log"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -31,37 +32,39 @@ func (s *UserService) CreateUser(user model.User) (model.UserResponse, error) {
 	return s.repo.Create(user)
 }
 
-
-func (s *UserService) Login(email, password string) (model.User,error) {
-	user,err := s.repo.FindByEmail(email)
+func (s *UserService) Login(email, password string) (model.User, error) {
+	user, err := s.repo.FindByEmail(email)
 	if err != nil {
-		return model.User{}, errors.New("Invalid Credentials")
+		return model.User{}, errors.New("invalid credentials")
 	}
 
 	// Compare hashed Credentials
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password),[]byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return model.User{},errors.New("Invalid Credentials")
+		return model.User{}, errors.New("invalid credentials")
 	}
 
 	return user, nil
 }
 
 func (s *UserService) GetUserByID(userID int) (model.UserResponse, error) {
-	user,err:= s.repo.GetUserById(userID)
-    if err != nil {
-        return model.UserResponse{}, err
-    }
-    return user, nil
+	user, err := s.repo.GetUserById(userID)
+	if err != nil {
+		return model.UserResponse{}, err
+	}
+	return user, nil
 }
 
-
-func (s *UserService) UpdateUser(userID int,user model.UserResponse) (model.UserResponse, error) {
+func (s *UserService) UpdateUser(userID int, user model.UserResponse) (model.UserResponse, error) {
 	return s.repo.UpdateUser(userID, user)
 }
 
-
-
 func (s *UserService) DeleteUser(userID int) (model.UserResponse, error) {
-	return s.repo.DeleteUser(userID)
+	user, err := s.repo.FindByUserID(userID)
+	log.Println("USER IS ERR : ", err)
+
+	if err != nil {
+		return model.UserResponse{}, errors.New("user not found")
+	}
+	return s.repo.DeleteUser(user.ID)
 }
