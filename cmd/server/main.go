@@ -23,8 +23,14 @@ func main() {
 
 	// Initialize repo, service, handler
 	repo := repository.NewUserRepository(db)
-	service := service.NewUserService(repo)
-	handler := handler.NewUserHandler(service)
+	materialRepo := repository.NewMaterialRepository(db)
+
+	// Initialize Service
+	userService := service.NewUserService(repo)
+	materialService := service.NewMaterialService(materialRepo)
+
+	userHandler := handler.NewUserHandler(userService)
+	materialHandler := handler.NewMaterialHandler(materialService)
 
 	// Initialize chi router
 	r := chi.NewRouter()
@@ -36,7 +42,7 @@ func main() {
 	r.Use(chiMiddleware.Timeout(60 * 1e9)) // 60s timeout
 
 	// Public routes
-	r.Post("/login", handler.Login)
+	r.Post("/login", userHandler.Login)
 
 	// Protected Routes
 	r.Group(func(r chi.Router) {
@@ -45,17 +51,23 @@ func main() {
 		// Admin Only routes
 		r.Group(func(r chi.Router) {
 			r.Use(myMw.RequireRole(constants.Admin))
-			r.Put("/user/{id}/update", handler.UpdateUser)
-			r.Delete("/user/{id}/delete", handler.DeleteUser)
+			r.Put("/user/{id}/update", userHandler.UpdateUser)
+			r.Delete("/user/{id}/delete", userHandler.DeleteUser)
 
 		})
 
 		// Admin And Manager Routes
 		r.Group(func(r chi.Router) {
 			r.Use(myMw.RequireRole(constants.Admin, constants.Manager))
-			r.Get("/users/getAll", handler.GetUsers)
-			r.Get("/user/{id}/getById", handler.GetUserByID)
-			r.Post("/user/create", handler.CreateUser)
+
+			// user endpoints
+			r.Get("/users/getAll", userHandler.GetUsers)
+			r.Get("/user/{id}/getById", userHandler.GetUserByID)
+			r.Post("/user/create", userHandler.CreateUser)
+
+			// Material endpoints
+
+			r.Get("/materials/getAll", materialHandler.GetAllMaterial)
 		})
 
 	})

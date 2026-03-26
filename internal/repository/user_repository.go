@@ -3,13 +3,18 @@ package repository
 import (
 	"context"
 	"errors"
-	"go-minimal/internal/model"
-	"log"
-
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"go-minimal/internal/model"
+	"log"
 )
 
+/*
+The interface - This defines contract of any Respository
+
+--> It allows for dependecy injection
+--> When writing unit test, we can swap the real database for a "mock" one without changing your business logic
+*/
 type UserRepositoryI interface {
 	GetAll() ([]model.UserResponse, error)
 	Create(user model.User) (model.UserResponse, error)
@@ -20,11 +25,18 @@ type UserRepositoryI interface {
 	DeleteUser(userID int) (model.UserResponse, error)
 }
 
+/*  The Struct ---> the concreate implementation  */
 type UserRepository struct {
+	/* It holds pointer to pgx connection */
+	/* It stores the tools ( the database connection ) neeeded to talk to Postgres */
 	db *pgx.Conn
 }
 
 func NewUserRepository(db *pgx.Conn) *UserRepository {
+	/*
+		It initilizes the repository with an active datgabase connection
+			--> We can call this in main.go and pass the resulting repository to your service layer
+	*/
 	return &UserRepository{
 		db: db,
 	}
@@ -47,7 +59,7 @@ func (r *UserRepository) GetAll() ([]model.UserResponse, error) {
 
 		err := rows.Scan(&user.ID, &user.Name, &user.Age, &user.Email, &user.Phone, &user.RoleID)
 		if err != nil {
-			return nil, err
+			return users, err
 		}
 
 		users = append(users, user)
