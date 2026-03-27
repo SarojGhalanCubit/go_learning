@@ -54,6 +54,9 @@ func main() {
 			r.Put("/user/{id}/update", userHandler.UpdateUser)
 			r.Delete("/user/{id}/delete", userHandler.DeleteUser)
 
+			r.Put("/material/{id}/update", materialHandler.UpdateMaterial)
+			r.Delete("/material/{id}/delete", materialHandler.DeleteMaterial)
+
 		})
 
 		// Admin And Manager Routes
@@ -67,8 +70,8 @@ func main() {
 
 			// Material endpoints
 			r.Get("/materials/getAll", materialHandler.GetAllMaterial)
+			r.Get("/material/{id}/getById", materialHandler.GeyByMaterialID)
 			r.Post("/material/create", materialHandler.CreateMaterial)
-			r.Put("/material/{id}/update", materialHandler.UpdateMaterial)
 		})
 
 	})

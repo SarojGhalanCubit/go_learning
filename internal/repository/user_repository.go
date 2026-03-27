@@ -6,7 +6,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go-minimal/internal/model"
-	"log"
 )
 
 /*
@@ -223,8 +222,6 @@ func (r *UserRepository) DeleteUser(userID int) (model.UserResponse, error) {
 
 	var deletedUser model.UserResponse
 
-	log.Println("Attempting to delete userID:", userID) // ✅ add this
-
 	deleteUserQuery := ` DELETE FROM users WHERE id = $1 RETURNING id, name, age, email, phone_number, role_id
     `
 	deleteUserQueryErr := r.db.QueryRow(context.Background(), deleteUserQuery, userID).Scan(&deletedUser.ID, &deletedUser.Name,
@@ -233,7 +230,6 @@ func (r *UserRepository) DeleteUser(userID int) (model.UserResponse, error) {
 		&deletedUser.Phone,
 		&deletedUser.RoleID,
 	)
-	log.Println("DELETE USER QUERY ERROR :: ", deleteUserQueryErr)
 	if deleteUserQueryErr != nil {
 		return deletedUser, errors.New("failed to delete user")
 	}

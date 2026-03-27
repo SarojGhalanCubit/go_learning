@@ -3,10 +3,9 @@ package repository
 import (
 	"context"
 	"errors"
-	"go-minimal/internal/model"
-
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"go-minimal/internal/model"
 )
 
 /*
@@ -18,7 +17,10 @@ The interface - This defines contract of any Respository
 type MaterialRepositoryI interface {
 	GetAllMaterial(ctx context.Context) ([]model.Material, error)
 	CreateMaterial(ctx context.Context, material model.CreateMaterial) (model.Material, error)
-	UpdateMaterial(ctx context.Context, materialID int, material model.CreateMaterial) (model.Material, error)
+	UpdateMaterial(ctx context.Context, materialID string, material model.CreateMaterial) (model.Material, error)
+	FindByMaterialID(ctx context.Context, materialID string) (model.Material, error)
+	DeleteMaterialById(ctx context.Context, materialID string) (model.Material, error)
+	GeyByMaterialID(ctx context.Context, materialID string) (model.Material, error)
 }
 
 /*  The Struct ---> the concreate implementation  */
@@ -106,7 +108,20 @@ func (r *MaterialRepository) CreateMaterial(ctx context.Context, material model.
 
 }
 
-func (r *MaterialRepository) UpdateUser(ctx context.Context, materialID int, material model.CreateMaterial) (model.Material, error) {
+func (r *MaterialRepository) FindByMaterialID(ctx context.Context, materialID string) (model.Material, error) {
+	var material model.Material
+
+	findByMaterialQuery := `SELECT id, name, is_active, created_at, updated_at FROM materials WHERE id = $1`
+
+	err := r.db.QueryRow(ctx, findByMaterialQuery, materialID).Scan(&material.ID, &material.Name, &material.IsActive, &material.CreatedAt, &material.UpdatedAt)
+
+	if err != nil {
+		return model.Material{}, errors.New("requested material did not exist")
+	}
+	return material, nil
+}
+
+func (r *MaterialRepository) UpdateMaterial(ctx context.Context, materialID string, material model.CreateMaterial) (model.Material, error) {
 
 	var updated model.Material
 
@@ -144,4 +159,34 @@ func (r *MaterialRepository) UpdateUser(ctx context.Context, materialID int, mat
 
 	return updated, nil
 
+}
+
+func (r *MaterialRepository) DeleteMaterialById(ctx context.Context, materialID string) (model.Material, error) {
+
+	var deletedMaterial model.Material
+
+	deleteMaterialQuery := `DELETE FROM materials WHERE ID = $1 RETURNING id,name, is_active, created_at,updated_at`
+
+	err := r.db.QueryRow(ctx, deleteMaterialQuery, materialID).Scan(&deletedMaterial.ID, &deletedMaterial.Name, &deletedMaterial.IsActive, &deletedMaterial.CreatedAt, &deletedMaterial.UpdatedAt)
+
+	if err != nil {
+		return deletedMaterial, errors.New("failed to delete material")
+	}
+
+	return deletedMaterial, nil
+
+}
+
+func (r *MaterialRepository) GeyByMaterialID(ctx context.Context, materialID string) (model.Material, error) {
+	var material model.Material
+
+	query := `SELECT id, name, is_active, created_at, updated_at FROM materials WHERE id=$1`
+
+	err := r.db.QueryRow(ctx, query, materialID).Scan(&material.ID, &material.Name, &material.IsActive, &material.CreatedAt, &material.UpdatedAt)
+
+	if err != nil {
+		return model.Material{}, errors.New("material did not found")
+	}
+
+	return material, nil
 }

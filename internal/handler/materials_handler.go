@@ -3,15 +3,13 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"github.com/go-chi/chi/v5"
 	"go-minimal/internal/model"
 	"go-minimal/internal/service"
 	"go-minimal/internal/utils"
 	materialValidate "go-minimal/internal/utils/validate"
 	"log"
 	"net/http"
-	"strconv"
-
-	"github.com/go-chi/chi/v5"
 )
 
 type MaterialHandler struct {
@@ -103,15 +101,11 @@ func (h *MaterialHandler) UpdateMaterial(w http.ResponseWriter, r *http.Request)
 	}
 
 	IDstr := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(IDstr)
-	if err != nil {
-		utils.WriteError(w, http.StatusNotFound, "Request Failed", "Invalid material ID")
-		return
-	}
 
-	updated, err := h.service.UpdateMaterial(context.Background(), id, material)
+	updated, err := h.service.UpdateMaterial(context.Background(), IDstr, material)
+	log.Println("ERR :: ", err)
 	if err != nil {
-		if err.Error() == "material name already exists" {
+		if err.Error() == "material name already exists" || err.Error() == "requested material did not exist" {
 			utils.WriteError(w, http.StatusConflict, err.Error(), "material update failed")
 			return
 		}
@@ -126,4 +120,43 @@ func (h *MaterialHandler) UpdateMaterial(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	utils.WriteSuccess(w, http.StatusCreated, "Material updated successfully", updated)
+}
+
+func (h *MaterialHandler) DeleteMaterial(w http.ResponseWriter, r *http.Request) {
+
+	IDstr := chi.URLParam(r, "id")
+	if r.Method != http.MethodDelete {
+		utils.WriteError(w, http.StatusMethodNotAllowed, "Invalid Method", "Method Not Allowed")
+		return
+	}
+
+	deletedMaterial, err := h.service.DeleteMaterialById(context.Background(), IDstr)
+
+	if err != nil {
+		utils.WriteError(w, http.StatusNotFound, "Request Failed", err.Error())
+		return
+	}
+
+	utils.WriteSuccess(w, http.StatusOK, "material deleted successfully", deletedMaterial)
+
+}
+
+func (h *MaterialHandler) GeyByMaterialID(w http.ResponseWriter, r *http.Request) {
+
+	IDstr := chi.URLParam(r, "id")
+
+	if r.Method != http.MethodGet {
+		utils.WriteError(w, http.StatusMethodNotAllowed, "Invalid Method", "Method Not Allowed")
+		return
+	}
+
+	user, err := h.service.GeyByMaterialID(context.Background(), IDstr)
+
+	if err != nil {
+		utils.WriteError(w, http.StatusNotFound, "Request Failed", err.Error())
+		return
+	}
+
+	utils.WriteSuccess(w, http.StatusOK, "Material fetched successfully", user)
+
 }
