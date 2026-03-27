@@ -66,8 +66,9 @@ func main() {
 			r.Post("/user/create", userHandler.CreateUser)
 
 			// Material endpoints
-
 			r.Get("/materials/getAll", materialHandler.GetAllMaterial)
+			r.Post("/material/create", materialHandler.CreateMaterial)
+			r.Put("/material/{id}/update", materialHandler.UpdateMaterial)
 		})
 
 	})

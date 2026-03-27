@@ -54,8 +54,6 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("ROLE ID IN user :: ", user.RoleID)
-
 	if userValidationErr := utils.ValidateUser(user.Name, user.Age, user.Phone, user.Email, user.Password); len(userValidationErr) > 0 {
 		utils.WriteError(w, http.StatusUnprocessableEntity, "Validation Error", userValidationErr)
 		return
@@ -76,10 +74,8 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user.RoleID = roleIdInt
-	log.Println("USER DATA WITH ROLE :: ", user.RoleID, roleIdInt)
 
 	created, err := h.service.CreateUser(user)
-	log.Println("Create User ERR :: ", err)
 	if err != nil {
 		if err.Error() == "email already exists" || err.Error() == "phone already exists" {
 			utils.WriteError(w, http.StatusConflict, err.Error(), "User creation failed")
@@ -210,7 +206,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	updated, err := h.service.UpdateUser(id, user)
 	if err != nil {
 		if err.Error() == "email already exists" || err.Error() == "phone already exists" {
-			utils.WriteError(w, http.StatusConflict, err.Error(), "User creation failed")
+			utils.WriteError(w, http.StatusConflict, err.Error(), "User update failed")
 			return
 		}
 

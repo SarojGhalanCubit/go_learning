@@ -22,3 +22,11 @@ func NewMaterialService(repo repository.MaterialRepositoryI) *MaterialsService {
 func (s *MaterialsService) GetAllMaterial(ctx context.Context) ([]model.Material, error) {
 	return s.repo.GetAllMaterial(ctx)
 }
+
+func (s *MaterialsService) CreateMaterial(ctx context.Context, material model.CreateMaterial) (model.Material, error) {
+	return s.repo.CreateMaterial(ctx, material)
+}
+
+func (s *MaterialsService) UpdateMaterial(ctx context.Context, materialID int, material model.CreateMaterial) (model.Material, error) {
+	return s.repo.UpdateMaterial(ctx, materialID, material)
+}

@@ -17,7 +17,8 @@ The interface - This defines contract of any Respository
 */
 type MaterialRepositoryI interface {
 	GetAllMaterial(ctx context.Context) ([]model.Material, error)
-	CreateMaterial(maerial model.CreateMaterial) (model.Material, error)
+	CreateMaterial(ctx context.Context, material model.CreateMaterial) (model.Material, error)
+	UpdateMaterial(ctx context.Context, materialID int, material model.CreateMaterial) (model.Material, error)
 }
 
 /*  The Struct ---> the concreate implementation  */
@@ -67,13 +68,13 @@ func (r *MaterialRepository) GetAllMaterial(ctx context.Context) ([]model.Materi
 	return materials, nil
 }
 
-func (r *MaterialRepository) CreateMaterial(material model.CreateMaterial) (model.Material, error) {
+func (r *MaterialRepository) CreateMaterial(ctx context.Context, material model.CreateMaterial) (model.Material, error) {
 
 	var createdMaterial model.Material
 
 	query := `INSERT INTO materials (name, is_active) VALUES ($1,$2) RETURNING id, name , is_active, created_at, updated_at `
 
-	err := r.db.QueryRow(context.Background(), query, material.Name, material.IsActive).Scan(&createdMaterial.ID, &createdMaterial.Name, &createdMaterial.IsActive, &createdMaterial.CreatedAt, createdMaterial.UpdatedAt)
+	err := r.db.QueryRow(ctx, query, material.Name, material.IsActive).Scan(&createdMaterial.ID, &createdMaterial.Name, &createdMaterial.IsActive, &createdMaterial.CreatedAt, &createdMaterial.UpdatedAt)
 
 	if err != nil {
 
@@ -84,10 +85,8 @@ func (r *MaterialRepository) CreateMaterial(material model.CreateMaterial) (mode
 
 			case "23505": // unique violation
 				switch pgErr.ConstraintName {
-				case "user_email_unique":
-					return createdMaterial, errors.New("email already exists")
-				case "user_phone_unique":
-					return createdMaterial, errors.New("phone already exists")
+				case "material_name_unique":
+					return createdMaterial, errors.New("material name already exists")
 				default:
 					return createdMaterial, errors.New("duplicate value")
 				}
@@ -104,5 +103,45 @@ func (r *MaterialRepository) CreateMaterial(material model.CreateMaterial) (mode
 	}
 
 	return createdMaterial, nil
+
+}
+
+func (r *MaterialRepository) UpdateUser(ctx context.Context, materialID int, material model.CreateMaterial) (model.Material, error) {
+
+	var updated model.Material
+
+	// check if material name already exits
+	var existingMaterialID int
+	nameCheckQuery := `SELECT id from materials WHERE name = $1 AND id != $2`
+
+	checkNameErr := r.db.QueryRow(ctx, nameCheckQuery, material.Name, materialID).Scan(&existingMaterialID)
+
+	if checkNameErr == nil {
+		// row found - email belongs to someone else
+		return updated, errors.New("material name already exists")
+	}
+
+	updateMaterialQuery := `UPDATE materials SET name = $1,is_active = $2 WHERE id = $3 RETURNING id, name, is_active, created_at, updated_at`
+
+	updateMaterialQueryErr := r.db.QueryRow(ctx, updateMaterialQuery, material.Name, material.IsActive, materialID).Scan(&updated.ID, &updated.Name, &updated.IsActive, &updated.CreatedAt, &updated.UpdatedAt)
+
+	if updateMaterialQueryErr != nil {
+		if pgErr, ok := updateMaterialQueryErr.(*pgconn.PgError); ok {
+			switch pgErr.Code {
+			case "23505":
+				switch pgErr.ConstraintName {
+				case "material_name_unique":
+					return updated, errors.New("material name already exists")
+				default:
+					return updated, errors.New("duplicate value")
+				}
+			case "23502":
+				return updated, errors.New("missing required field")
+			}
+		}
+		return updated, updateMaterialQueryErr
+	}
+
+	return updated, nil
 
 }

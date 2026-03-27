@@ -146,8 +146,6 @@ func (r *UserRepository) FindByUserID(userID int) (model.UserResponse, error) {
 
 	err := r.db.QueryRow(context.Background(), query, userID).Scan(&user.ID, &user.Name, &user.Email, &user.Phone, &user.RoleID)
 
-	log.Println("I am called or not", err)
-
 	if err != nil {
 		return model.UserResponse{}, err
 	}
