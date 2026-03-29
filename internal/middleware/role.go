@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"net/http"
-	"log"
 	"go-minimal/internal/utils"
+	"log"
+	"net/http"
 )
 
 func RequireRole(allowedRoles ...int) func(http.Handler) http.Handler {
@@ -16,7 +16,7 @@ func RequireRole(allowedRoles ...int) func(http.Handler) http.Handler {
 				return
 			}
 
-			log.Println("ROLE ID :: ",roleID)
+			log.Println("ROLE ID :: ", roleID)
 
 			for _, role := range allowedRoles {
 				if roleID == role {
@@ -25,7 +25,7 @@ func RequireRole(allowedRoles ...int) func(http.Handler) http.Handler {
 				}
 			}
 
-			utils.WriteError(w, http.StatusForbidden, "Request Failed", "Permission denied")
+			utils.WriteError(w, http.StatusForbidden, "your current role cannot access this feature", "Permission denied")
 		})
 	}
 }
