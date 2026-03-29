@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS materials (
     name TEXT NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CONSTRAINT material_name_unique UNIQUE (name)
 );
 
 -- Index for faster lookups on active materials
