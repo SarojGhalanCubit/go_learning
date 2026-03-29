@@ -20,6 +20,7 @@ func main() {
 	config.LoadEnv()
 	db := config.ConnectDB()
 	defer db.Close(context.Background())
+	constants.LoadRoles()
 
 	// Initialize repo, service, handler
 	repo := repository.NewUserRepository(db)
@@ -50,7 +51,7 @@ func main() {
 
 		// Admin Only routes
 		r.Group(func(r chi.Router) {
-			r.Use(myMw.RequireRole(constants.Admin))
+			r.Use(myMw.RequireRole(constants.AdminID))
 			r.Put("/user/{id}/update", userHandler.UpdateUser)
 			r.Delete("/user/{id}/delete", userHandler.DeleteUser)
 
@@ -61,7 +62,7 @@ func main() {
 
 		// Admin And Manager Routes
 		r.Group(func(r chi.Router) {
-			r.Use(myMw.RequireRole(constants.Admin, constants.Manager))
+			r.Use(myMw.RequireRole(constants.AdminID, constants.ManagerID))
 
 			// user endpoints
 			r.Get("/users/getAll", userHandler.GetUsers)
