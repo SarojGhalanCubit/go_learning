@@ -45,7 +45,7 @@ func NewUserRepository(db *pgx.Conn) *UserRepository {
 func (r *UserRepository) GetAll() ([]model.UserResponse, error) {
 
 	rows, err := r.db.Query(context.Background(),
-		"SELECT id, name, age, email, phone_number, role_id FROM users")
+		"SELECT id, name, age, email, phone_number, role_id, created_at,updated_at FROM users")
 
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func (r *UserRepository) GetAll() ([]model.UserResponse, error) {
 	for rows.Next() {
 		var user model.UserResponse
 
-		err := rows.Scan(&user.ID, &user.Name, &user.Age, &user.Email, &user.Phone, &user.RoleID)
+		err := rows.Scan(&user.ID, &user.Name, &user.Age, &user.Email, &user.Phone, &user.RoleID, &user.CreatedAt, &user.UpdatedAt)
 		if err != nil {
 			return users, err
 		}
@@ -75,7 +75,7 @@ func (r *UserRepository) Create(user model.User) (model.UserResponse, error) {
 	query := `
 		INSERT INTO users (name, age, email, phone_number, password,role_id)
 		VALUES ($1, $2, $3, $4, $5,$6)
-		RETURNING id, name, age, email, phone_number, role_id
+		RETURNING id, name, age, email, phone_number, role_id,created_at,updated_at
 	`
 
 	err := r.db.QueryRow(
@@ -94,6 +94,8 @@ func (r *UserRepository) Create(user model.User) (model.UserResponse, error) {
 		&created.Email,
 		&created.Phone,
 		&created.RoleID,
+		&created.CreatedAt,
+		&created.UpdatedAt,
 	)
 
 	if err != nil {
@@ -130,9 +132,9 @@ func (r *UserRepository) Create(user model.User) (model.UserResponse, error) {
 func (r *UserRepository) FindByEmail(email string) (model.User, error) {
 	var user model.User
 
-	query := `SELECT id,name,email,password,role_id FROM users WHERE email=$1`
+	query := `SELECT id,name,email,password,role_id,created_at,updated_at FROM users WHERE email=$1`
 
-	err := r.db.QueryRow(context.Background(), query, email).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.RoleID)
+	err := r.db.QueryRow(context.Background(), query, email).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.RoleID, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
 		return model.User{}, err
@@ -142,9 +144,9 @@ func (r *UserRepository) FindByEmail(email string) (model.User, error) {
 
 func (r *UserRepository) FindByUserID(userID int) (model.UserResponse, error) {
 	var user model.UserResponse
-	query := `SELECT id,name,email,password,role_id FROM users WHERE id=$1`
+	query := `SELECT id,name,email,password,role_id,created_at,updated_at FROM users WHERE id=$1`
 
-	err := r.db.QueryRow(context.Background(), query, userID).Scan(&user.ID, &user.Name, &user.Email, &user.Phone, &user.RoleID)
+	err := r.db.QueryRow(context.Background(), query, userID).Scan(&user.ID, &user.Name, &user.Email, &user.Phone, &user.RoleID, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
 		return model.UserResponse{}, err
@@ -155,9 +157,9 @@ func (r *UserRepository) FindByUserID(userID int) (model.UserResponse, error) {
 func (r *UserRepository) GetUserById(userID int) (model.UserResponse, error) {
 	var user model.UserResponse
 
-	query := `SELECT id,name,age,email,phone_number,role_id FROM users WHERE id=$1`
+	query := `SELECT id,name,age,email,phone_number,role_id,created_at , updated_at FROM users WHERE id=$1`
 
-	err := r.db.QueryRow(context.Background(), query, userID).Scan(&user.ID, &user.Name, &user.Age, &user.Email, &user.Phone, &user.RoleID)
+	err := r.db.QueryRow(context.Background(), query, userID).Scan(&user.ID, &user.Name, &user.Age, &user.Email, &user.Phone, &user.RoleID, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
 		return model.UserResponse{}, errors.New("User not found")
@@ -193,9 +195,9 @@ func (r *UserRepository) UpdateUser(userID int, user model.UserResponse) (model.
 		UPDATE users 
 		SET name = $1, age = $2, email = $3, phone_number = $4,role_id = $5
 		WHERE id = $6
-		RETURNING id,name,age,email,phone_number,role_id
+		RETURNING id,name,age,email,phone_number,role_id,created_at, updated_at
 	`
-	updateUserQueryErr := r.db.QueryRow(context.Background(), query, user.Name, user.Age, user.Email, user.Phone, user.RoleID, userID).Scan(&updated.ID, &updated.Name, &updated.Age, &updated.Email, &updated.Phone, &updated.RoleID)
+	updateUserQueryErr := r.db.QueryRow(context.Background(), query, user.Name, user.Age, user.Email, user.Phone, user.RoleID, userID).Scan(&updated.ID, &updated.Name, &updated.Age, &updated.Email, &updated.Phone, &updated.RoleID, &updated.CreatedAt, &updated.UpdatedAt)
 
 	if updateUserQueryErr != nil {
 		if pgErr, ok := updateUserQueryErr.(*pgconn.PgError); ok {
@@ -223,13 +225,13 @@ func (r *UserRepository) DeleteUser(userID int) (model.UserResponse, error) {
 
 	var deletedUser model.UserResponse
 
-	deleteUserQuery := ` DELETE FROM users WHERE id = $1 RETURNING id, name, age, email, phone_number, role_id
+	deleteUserQuery := ` DELETE FROM users WHERE id = $1 RETURNING id, name, age, email, phone_number, role_id,created_at, updated_at
     `
 	deleteUserQueryErr := r.db.QueryRow(context.Background(), deleteUserQuery, userID).Scan(&deletedUser.ID, &deletedUser.Name,
 		&deletedUser.Age,
 		&deletedUser.Email,
 		&deletedUser.Phone,
-		&deletedUser.RoleID,
+		&deletedUser.RoleID, &deletedUser.CreatedAt, &deletedUser.UpdatedAt,
 	)
 	if deleteUserQueryErr != nil {
 		return deletedUser, errors.New("failed to delete user")
