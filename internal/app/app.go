@@ -4,6 +4,7 @@ import (
 	authHandler "go-minimal/internal/modules/auth/handler"
 	colorHandler "go-minimal/internal/modules/colors/handler"
 	"go-minimal/internal/modules/materials/handler"
+	sizeHandler "go-minimal/internal/modules/sizes/handler"
 	userHandler "go-minimal/internal/modules/users/handler"
 
 	"github.com/jackc/pgx/v5"
@@ -14,6 +15,7 @@ type App struct {
 	UserHandler     *userHandler.UserHandler
 	AuthHandler     *authHandler.AuthHandler
 	ColorHandler    *colorHandler.ColorHandler
+	SizeHandler     *sizeHandler.SizeHandler
 }
 
 func NewApp(db *pgx.Conn) *App {
@@ -22,5 +24,6 @@ func NewApp(db *pgx.Conn) *App {
 	a.initUsers(db)
 	a.initAuth(db)
 	a.initColors(db)
+	a.intiSizes(db)
 	return a
 }
