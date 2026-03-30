@@ -3,6 +3,7 @@ package router
 import (
 	"go-minimal/internal/app"
 	authRoute "go-minimal/internal/modules/auth/routes"
+	categoriesRoute "go-minimal/internal/modules/categories/routes"
 	colorRoute "go-minimal/internal/modules/colors/routes"
 	materials "go-minimal/internal/modules/materials/routes"
 	sizeRoutes "go-minimal/internal/modules/sizes/routes"
@@ -38,6 +39,10 @@ func NewRouter(a *app.App) *Router {
 
 	r.Route("/api/v1/sizes", func(r chi.Router) {
 		sizeRoutes.RegisterRoutes(r, a.SizeHandler)
+	})
+
+	r.Route("/api/v1/categories", func(r chi.Router) {
+		categoriesRoute.RegisterRoutes(r, a.CategoriesHandler)
 	})
 
 	return &Router{mux: r}
