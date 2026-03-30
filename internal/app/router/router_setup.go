@@ -2,8 +2,10 @@ package router
 
 import (
 	"go-minimal/internal/app"
+	authRoute "go-minimal/internal/modules/auth/routes"
+	colorRoute "go-minimal/internal/modules/colors/routes"
 	materials "go-minimal/internal/modules/materials/routes"
-	users "go-minimal/internal/modules/users/routes"
+	usersRoute "go-minimal/internal/modules/users/routes"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -18,7 +20,7 @@ func NewRouter(a *app.App) *Router {
 	registerMiddleware(r)
 
 	r.Route("/api/v1/login", func(r chi.Router) {
-		materials.RegisterRoutes(r, a.MaterialHandler)
+		authRoute.RegisterRoutes(r, a.AuthHandler)
 	})
 
 	r.Route("/api/v1/materials", func(r chi.Router) {
@@ -26,7 +28,11 @@ func NewRouter(a *app.App) *Router {
 	})
 
 	r.Route("/api/v1/users", func(r chi.Router) {
-		users.RegisterRoutes(r, a.UserHandler)
+		usersRoute.RegisterRoutes(r, a.UserHandler)
+	})
+
+	r.Route("/api/v1/colors", func(r chi.Router) {
+		colorRoute.RegisterRoutes(r, a.ColorHandler)
 	})
 
 	return &Router{mux: r}

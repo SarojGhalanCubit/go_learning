@@ -1,7 +1,8 @@
 package app
 
 import (
-	userLoginHandler "go-minimal/internal/modules/auth/login/handler"
+	authHandler "go-minimal/internal/modules/auth/handler"
+	colorHandler "go-minimal/internal/modules/colors/handler"
 	"go-minimal/internal/modules/materials/handler"
 	userHandler "go-minimal/internal/modules/users/handler"
 
@@ -9,14 +10,17 @@ import (
 )
 
 type App struct {
-	MaterialHandler  *handler.MaterialHandler
-	UserHandler      *userHandler.UserHandler
-	UserLoginHandler *userLoginHandler.UserLoginHandler
+	MaterialHandler *materialsHandler.MaterialHandler
+	UserHandler     *userHandler.UserHandler
+	AuthHandler     *authHandler.AuthHandler
+	ColorHandler    *colorHandler.ColorHandler
 }
 
 func NewApp(db *pgx.Conn) *App {
 	a := &App{}
 	a.initMaterials(db)
 	a.initUsers(db)
+	a.initAuth(db)
+	a.initColors(db)
 	return a
 }

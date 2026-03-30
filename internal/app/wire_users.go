@@ -1,7 +1,7 @@
 package app
 
 import (
-	"go-minimal/internal/modules/users/handler"
+	userHandler "go-minimal/internal/modules/users/handler"
 	"go-minimal/internal/modules/users/repository"
 	"go-minimal/internal/modules/users/service"
 
@@ -9,7 +9,7 @@ import (
 )
 
 func (a *App) initUsers(db *pgx.Conn) {
-	repo := repository.NewUserRepository(db)
-	svc := service.NewUserService(repo)
-	a.UserHandler = handler.NewUserHandler(svc)
+	repo := userRepository.NewUserRepository(db)
+	svc := userService.NewUserService(repo)
+	a.UserHandler = userHandler.NewUserHandler(svc)
 }

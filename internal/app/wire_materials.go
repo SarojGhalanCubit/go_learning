@@ -9,7 +9,7 @@ import (
 )
 
 func (a *App) initMaterials(db *pgx.Conn) {
-	repo := repository.NewMaterialRepository(db)
-	svc := service.NewMaterialService(repo)
-	a.MaterialHandler = handler.NewMaterialHandler(svc)
+	repo := materialRepository.NewMaterialRepository(db)
+	svc := materialService.NewMaterialService(repo)
+	a.MaterialHandler = materialsHandler.NewMaterialHandler(svc)
 }
