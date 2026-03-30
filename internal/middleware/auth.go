@@ -2,14 +2,11 @@ package middleware
 
 import (
 	"context"
-	"go-minimal/internal/config"
 	"go-minimal/internal/utils"
-	"log"
 	"net/http"
 	"strings"
 )
 
-var jwtSecret = []byte(config.GetJwtSecretKey()) // later move to env variable
 type contextKey string
 
 const UserIDKey contextKey = "user_id"
@@ -32,7 +29,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		roleID, err := utils.GetRoleIDFromToken(tokenString)
-		log.Println("ROLE ID ::: ", roleID)
 		if err != nil {
 			utils.WriteError(w, http.StatusUnauthorized, "Invalid token", "Unauthorized")
 			return
