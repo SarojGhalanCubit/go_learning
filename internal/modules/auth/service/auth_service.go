@@ -1,4 +1,4 @@
-package userLoginService
+package authService
 
 import (
 	"errors"
@@ -8,9 +8,19 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Login(email, password string) (model.User, error) {
+type AuthService struct {
+	repo userRepository.UserRepositoryI
+}
 
-	user, err := repository.UserRepositoryI.FindByEmail(_, email)
+func NewAuthService(repo userRepository.UserRepositoryI) *AuthService {
+	return &AuthService{
+		repo: repo,
+	}
+}
+
+func (s *AuthService) Login(email, password string) (model.User, error) {
+
+	user, err := s.repo.FindByEmail(email)
 
 	if err != nil {
 		return model.User{}, errors.New("invalid credentials")

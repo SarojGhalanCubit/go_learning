@@ -1,26 +1,27 @@
-package userLoginHandler
+package authHandler
 
 import (
 	"encoding/json"
-	userLoginService "go-minimal/internal/modules/auth/login/service"
+	authLoginService "go-minimal/internal/modules/auth/service"
 	"go-minimal/internal/utils"
+	"log"
 	"net/http"
 )
 
-type UserLoginHandler struct {
-	service *userLoginService.UserLoginService
+type AuthHandler struct {
+	service *authLoginService.AuthService
 }
 
-func NewUserHandler(service *userLoginService.UserLoginService) *UserLoginHandler {
+func NewAuthHandler(service *authLoginService.AuthService) *AuthHandler {
 
 	if service == nil {
 		panic("Service cannot be nil.")
 	}
 
-	return &UserLoginHandler{service: service}
+	return &AuthHandler{service: service}
 }
 
-func (h *UserLoginHandler) Login(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		utils.WriteError(w, http.StatusMethodNotAllowed, "Invalid Method", "Method not allowed")
@@ -48,6 +49,8 @@ func (h *UserLoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusUnauthorized, "Login Failed", "Invalid Credentials")
 		return
 	}
+
+	log.Println("USER DATA ::: ", input.Email, input.Password, user.RoleID)
 	token, err := utils.GenerateToken(user.ID, user.RoleID)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "Token generation failed", err.Error())
