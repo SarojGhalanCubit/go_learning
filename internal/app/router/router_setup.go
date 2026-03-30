@@ -5,6 +5,7 @@ import (
 	authRoute "go-minimal/internal/modules/auth/routes"
 	colorRoute "go-minimal/internal/modules/colors/routes"
 	materials "go-minimal/internal/modules/materials/routes"
+	sizeRoutes "go-minimal/internal/modules/sizes/routes"
 	usersRoute "go-minimal/internal/modules/users/routes"
 	"net/http"
 
@@ -33,6 +34,10 @@ func NewRouter(a *app.App) *Router {
 
 	r.Route("/api/v1/colors", func(r chi.Router) {
 		colorRoute.RegisterRoutes(r, a.ColorHandler)
+	})
+
+	r.Route("/api/v1/sizes", func(r chi.Router) {
+		sizeRoutes.RegisterRoutes(r, a.SizeHandler)
 	})
 
 	return &Router{mux: r}
