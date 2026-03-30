@@ -45,6 +45,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := h.service.Login(input.Email, input.Password)
+	log.Println("LOGIN ERR ::: ", err)
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "Login Failed", "Invalid Credentials")
 		return

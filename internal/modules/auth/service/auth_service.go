@@ -4,6 +4,7 @@ import (
 	"errors"
 	"go-minimal/internal/modules/users/model"
 	"go-minimal/internal/modules/users/repository"
+	"log"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -21,6 +22,7 @@ func NewAuthService(repo userRepository.UserRepositoryI) *AuthService {
 func (s *AuthService) Login(email, password string) (model.User, error) {
 
 	user, err := s.repo.FindByEmail(email)
+	log.Println("SERIVCE LOGIN ERRR :: ", err, email, password)
 
 	if err != nil {
 		return model.User{}, errors.New("invalid credentials")
