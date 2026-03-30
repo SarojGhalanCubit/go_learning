@@ -1,4 +1,4 @@
-package handler
+package usersHandler
 
 import (
 	"encoding/json"
@@ -15,10 +15,10 @@ import (
 )
 
 type UserHandler struct {
-	service *service.UserService
+	service *userService.UserService
 }
 
-func NewUserHandler(service *service.UserService) *UserHandler {
+func NewUserHandler(service *userService.UserService) *UserHandler {
 
 	if service == nil {
 		panic("Service cannot be nil.")

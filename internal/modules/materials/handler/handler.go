@@ -1,4 +1,4 @@
-package handler
+package materialsHandler
 
 import (
 	"context"
@@ -14,10 +14,10 @@ import (
 )
 
 type MaterialHandler struct {
-	service *service.MaterialsService
+	service *materialService.MaterialsService
 }
 
-func NewMaterialHandler(service *service.MaterialsService) *MaterialHandler {
+func NewMaterialHandler(service *materialService.MaterialsService) *MaterialHandler {
 	if service == nil {
 		panic("Material service cannot be nil")
 	}
@@ -48,7 +48,7 @@ func (h *MaterialHandler) CreateMaterial(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var material model.CreateMaterial
+	var material materialsModel.CreateMaterial
 
 	err := json.NewDecoder(r.Body).Decode(&material)
 	if err != nil {
@@ -89,7 +89,7 @@ func (h *MaterialHandler) UpdateMaterial(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var material model.CreateMaterial
+	var material materialsModel.CreateMaterial
 
 	if err := json.NewDecoder(r.Body).Decode(&material); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "Update material failed", "Invalid Request Body")

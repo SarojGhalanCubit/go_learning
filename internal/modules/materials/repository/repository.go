@@ -1,4 +1,4 @@
-package repository
+package materialRepository
 
 import (
 	"context"
@@ -15,12 +15,12 @@ The interface - This defines contract of any Respository
 --> When writing unit test, we can swap the real database for a "mock" one without changing your business logic
 */
 type MaterialRepositoryI interface {
-	GetAllMaterial(ctx context.Context) ([]model.Material, error)
-	CreateMaterial(ctx context.Context, material model.CreateMaterial) (model.Material, error)
-	UpdateMaterial(ctx context.Context, materialID string, material model.CreateMaterial) (model.Material, error)
-	FindByMaterialID(ctx context.Context, materialID string) (model.Material, error)
-	DeleteMaterialById(ctx context.Context, materialID string) (model.Material, error)
-	GeyByMaterialID(ctx context.Context, materialID string) (model.Material, error)
+	GetAllMaterial(ctx context.Context) ([]materialsModel.Material, error)
+	CreateMaterial(ctx context.Context, material materialsModel.CreateMaterial) (materialsModel.Material, error)
+	UpdateMaterial(ctx context.Context, materialID string, material materialsModel.CreateMaterial) (materialsModel.Material, error)
+	FindByMaterialID(ctx context.Context, materialID string) (materialsModel.Material, error)
+	DeleteMaterialById(ctx context.Context, materialID string) (materialsModel.Material, error)
+	GeyByMaterialID(ctx context.Context, materialID string) (materialsModel.Material, error)
 }
 
 /*  The Struct ---> the concreate implementation  */
@@ -43,7 +43,7 @@ func NewMaterialRepository(db *pgx.Conn) *MaterialRepository {
 	}
 }
 
-func (r *MaterialRepository) GetAllMaterial(ctx context.Context) ([]model.Material, error) {
+func (r *MaterialRepository) GetAllMaterial(ctx context.Context) ([]materialsModel.Material, error) {
 	query := `SELECT id, name, is_active,created_at, updated_at FROM materials`
 
 	materialsRows, err := r.db.Query(ctx, query)
@@ -53,10 +53,10 @@ func (r *MaterialRepository) GetAllMaterial(ctx context.Context) ([]model.Materi
 
 	defer materialsRows.Close()
 
-	var materials []model.Material
+	var materials []materialsModel.Material
 
 	for materialsRows.Next() {
-		var material model.Material
+		var material materialsModel.Material
 
 		err := materialsRows.Scan(&material.ID, &material.Name, &material.IsActive, &material.CreatedAt, &material.UpdatedAt)
 
@@ -70,9 +70,9 @@ func (r *MaterialRepository) GetAllMaterial(ctx context.Context) ([]model.Materi
 	return materials, nil
 }
 
-func (r *MaterialRepository) CreateMaterial(ctx context.Context, material model.CreateMaterial) (model.Material, error) {
+func (r *MaterialRepository) CreateMaterial(ctx context.Context, material materialsModel.CreateMaterial) (materialsModel.Material, error) {
 
-	var createdMaterial model.Material
+	var createdMaterial materialsModel.Material
 
 	query := `INSERT INTO materials (name, is_active) VALUES ($1,$2) RETURNING id, name , is_active, created_at, updated_at `
 
@@ -108,22 +108,22 @@ func (r *MaterialRepository) CreateMaterial(ctx context.Context, material model.
 
 }
 
-func (r *MaterialRepository) FindByMaterialID(ctx context.Context, materialID string) (model.Material, error) {
-	var material model.Material
+func (r *MaterialRepository) FindByMaterialID(ctx context.Context, materialID string) (materialsModel.Material, error) {
+	var material materialsModel.Material
 
 	findByMaterialQuery := `SELECT id, name, is_active, created_at, updated_at FROM materials WHERE id = $1`
 
 	err := r.db.QueryRow(ctx, findByMaterialQuery, materialID).Scan(&material.ID, &material.Name, &material.IsActive, &material.CreatedAt, &material.UpdatedAt)
 
 	if err != nil {
-		return model.Material{}, errors.New("requested material did not exist")
+		return materialsModel.Material{}, errors.New("requested material did not exist")
 	}
 	return material, nil
 }
 
-func (r *MaterialRepository) UpdateMaterial(ctx context.Context, materialID string, material model.CreateMaterial) (model.Material, error) {
+func (r *MaterialRepository) UpdateMaterial(ctx context.Context, materialID string, material materialsModel.CreateMaterial) (materialsModel.Material, error) {
 
-	var updated model.Material
+	var updated materialsModel.Material
 
 	// check if material name already exits
 	var existingMaterialID int
@@ -161,9 +161,9 @@ func (r *MaterialRepository) UpdateMaterial(ctx context.Context, materialID stri
 
 }
 
-func (r *MaterialRepository) DeleteMaterialById(ctx context.Context, materialID string) (model.Material, error) {
+func (r *MaterialRepository) DeleteMaterialById(ctx context.Context, materialID string) (materialsModel.Material, error) {
 
-	var deletedMaterial model.Material
+	var deletedMaterial materialsModel.Material
 
 	deleteMaterialQuery := `DELETE FROM materials WHERE ID = $1 RETURNING id,name, is_active, created_at,updated_at`
 
@@ -177,15 +177,15 @@ func (r *MaterialRepository) DeleteMaterialById(ctx context.Context, materialID 
 
 }
 
-func (r *MaterialRepository) GeyByMaterialID(ctx context.Context, materialID string) (model.Material, error) {
-	var material model.Material
+func (r *MaterialRepository) GeyByMaterialID(ctx context.Context, materialID string) (materialsModel.Material, error) {
+	var material materialsModel.Material
 
 	query := `SELECT id, name, is_active, created_at, updated_at FROM materials WHERE id=$1`
 
 	err := r.db.QueryRow(ctx, query, materialID).Scan(&material.ID, &material.Name, &material.IsActive, &material.CreatedAt, &material.UpdatedAt)
 
 	if err != nil {
-		return model.Material{}, errors.New("material did not found")
+		return materialsModel.Material{}, errors.New("material did not found")
 	}
 
 	return material, nil

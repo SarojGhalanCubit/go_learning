@@ -4,11 +4,12 @@ import (
 	"context"
 	"go-minimal/internal/config"
 	"go-minimal/internal/utils"
+	"log"
 	"net/http"
 	"strings"
 )
 
-var jwtSecret = []byte(config.GetJwtSecretKey())// later move to env variable
+var jwtSecret = []byte(config.GetJwtSecretKey()) // later move to env variable
 type contextKey string
 
 const UserIDKey contextKey = "user_id"
@@ -18,28 +19,27 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			utils.WriteError(w,http.StatusUnauthorized,"No token Provided","Unauthorized")
+			utils.WriteError(w, http.StatusUnauthorized, "No token Provided", "Unauthorized")
 			return
 		}
 
-	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
-	userID, err := utils.GetUserIDFromToken(tokenString)
-	if err != nil {
-		utils.WriteError(w,http.StatusUnauthorized,"Invalid token", "Unauthorized")
-    		return
-	}	
+		userID, err := utils.GetUserIDFromToken(tokenString)
+		if err != nil {
+			utils.WriteError(w, http.StatusUnauthorized, "Invalid token", "Unauthorized")
+			return
+		}
 
-	roleID, err := utils.GetRoleIDFromToken(tokenString)
-	if err != nil {
-		utils.WriteError(w,http.StatusUnauthorized,"Invalid token", "Unauthorized")
-    		return
-	}	
-	ctx := context.WithValue(r.Context(), UserIDKey, userID)
-	ctx = context.WithValue(ctx, RoleIDKey, roleID)
+		roleID, err := utils.GetRoleIDFromToken(tokenString)
+		log.Println("ROLE ID ::: ", roleID)
+		if err != nil {
+			utils.WriteError(w, http.StatusUnauthorized, "Invalid token", "Unauthorized")
+			return
+		}
+		ctx := context.WithValue(r.Context(), UserIDKey, userID)
+		ctx = context.WithValue(ctx, RoleIDKey, roleID)
 
-	next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
-
-

@@ -1,4 +1,4 @@
-package model
+package materialsModel
 
 import (
 	"github.com/google/uuid"

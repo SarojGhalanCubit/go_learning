@@ -1,4 +1,4 @@
-package service
+package userService
 
 import (
 	"errors"
@@ -8,10 +8,10 @@ import (
 )
 
 type UserService struct {
-	repo repository.UserRepositoryI
+	repo userRepository.UserRepositoryI
 }
 
-func NewUserService(repo repository.UserRepositoryI) *UserService {
+func NewUserService(repo userRepository.UserRepositoryI) *UserService {
 	if repo == nil {
 		panic("repository cannot be nil")
 	}
