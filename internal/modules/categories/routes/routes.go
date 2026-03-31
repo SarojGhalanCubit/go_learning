@@ -16,12 +16,12 @@ func RegisterRoutes(r chi.Router, h *categoriesHandler.CategoriesHandler) {
 		r.Use(myMw.RequireRole(constants.AdminID, constants.ManagerID))
 
 		r.Get("/getAll", h.GetAllCategories)
-		// r.Get("/{id}/getById", h.GeySizeByID)
+		r.Get("/{id}/getById", h.GeyByCategoryID)
 	})
-	// r.Group(func(r chi.Router) {
-	// 	r.Use(myMw.RequireRole(constants.AdminID))
-	// 	r.Post("/create", h.CreateSize)
-	// 	r.Delete("/{id}/delete", h.DeleteSizeByID)
-	// 	r.Put("/{id}/update", h.UpdateSize)
-	// })
+	r.Group(func(r chi.Router) {
+		r.Use(myMw.RequireRole(constants.AdminID))
+		r.Post("/create", h.CreateCategory)
+		r.Delete("/{id}/delete", h.DeleteCategory)
+		r.Put("/{id}/update", h.UpdateCategory)
+	})
 }
