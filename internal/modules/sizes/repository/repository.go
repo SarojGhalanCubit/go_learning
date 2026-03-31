@@ -6,6 +6,7 @@ import (
 	sizeModel "go-minimal/internal/modules/sizes/model"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type SizeRepositoryI interface {
@@ -60,6 +61,28 @@ func (r *SizeRepository) CreateSize(ctx context.Context, size sizeModel.CreateSi
 	err := r.db.QueryRow(ctx, query, size.Name, size.SortOrder).Scan(&createdSize.ID, &createdSize.Name, &createdSize.SortOrder, &createdSize.CreatedAt)
 
 	if err != nil {
+
+		// Detect Postgres error
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+
+			switch pgErr.Code {
+
+			case "23505": // unique violation
+				switch pgErr.ConstraintName {
+				case "unique_size_name":
+					return createdSize, errors.New("size name already exists")
+				default:
+					return createdSize, errors.New("duplicate value")
+				}
+
+			case "23502": // not null violation
+				return createdSize, errors.New("missing required field")
+
+			case "23514": // check constraint
+				return createdSize, errors.New("invalid field value")
+			}
+		}
+
 		return createdSize, err
 	}
 

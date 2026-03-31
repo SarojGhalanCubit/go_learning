@@ -6,6 +6,7 @@ import (
 	colorModel "go-minimal/internal/modules/colors/model"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type ColorsRepositoryI interface {
@@ -58,6 +59,27 @@ func (r *ColorsRepository) CreateColor(ctx context.Context, color colorModel.Cre
 	err := r.db.QueryRow(ctx, query, color.Name, color.HexCode).Scan(&createdColor.ID, &createdColor.Name, &createdColor.HexCode, &createdColor.CreatedAt)
 
 	if err != nil {
+		// Detect Postgres error
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+
+			switch pgErr.Code {
+
+			case "23505": // unique violation
+				switch pgErr.ConstraintName {
+				case "unique_color_name":
+					return createdColor, errors.New("color name already exists")
+				default:
+					return createdColor, errors.New("duplicate value")
+				}
+
+			case "23502": // not null violation
+				return createdColor, errors.New("missing required field")
+
+			case "23514": // check constraint
+				return createdColor, errors.New("invalid field value")
+			}
+		}
+
 		return createdColor, err
 	}
 

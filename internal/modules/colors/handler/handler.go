@@ -23,11 +23,13 @@ func NewColorHandler(service *colorService.ColorsService) *ColorHandler {
 func (h *ColorHandler) GetAllColors(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.WriteError(w, http.StatusMethodNotAllowed, "Invalid Method", "Method Not Allowed")
+		return
 	}
 
 	colors, err := h.service.GetAllColors(context.Background())
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error(), "Internal Server Error")
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -44,6 +46,7 @@ func (h *ColorHandler) CreateColor(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&color)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "create material failed", "Invalid request body")
+		return
 	}
 
 	if userValidationErr := validateColor.ValidateColor(color.Name, color.HexCode); len(userValidationErr) > 0 {

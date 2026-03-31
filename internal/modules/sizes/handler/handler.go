@@ -24,12 +24,14 @@ func NewSizeHandler(s *sizeService.SizeService) *SizeHandler {
 func (s *SizeHandler) GetAllSizes(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.WriteError(w, http.StatusMethodNotAllowed, "Invalid request method ", "method not allowed")
+		return
 	}
 
 	sizes, err := s.service.GetAllSizes(context.Background())
 
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error(), "Internal Server Error")
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -40,6 +42,7 @@ func (s *SizeHandler) GetAllSizes(w http.ResponseWriter, r *http.Request) {
 func (s *SizeHandler) CreateSize(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.WriteError(w, http.StatusMethodNotAllowed, "invalid request method", "method not allowed")
+		return
 	}
 
 	var size sizeModel.CreateSize
@@ -47,6 +50,7 @@ func (s *SizeHandler) CreateSize(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 
 		utils.WriteError(w, http.StatusInternalServerError, "create material failed", "Invalid request body")
+		return
 	}
 
 	if userValidationErr := validateaSize.ValidateSize(size.Name, size.SortOrder); len(userValidationErr) > 0 {

@@ -7,7 +7,6 @@ import (
 	"go-minimal/internal/modules/materials/service"
 	"go-minimal/internal/utils"
 	materialValidate "go-minimal/internal/utils/validate"
-	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -30,11 +29,13 @@ func NewMaterialHandler(service *materialService.MaterialsService) *MaterialHand
 func (h *MaterialHandler) GetAllMaterial(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		utils.WriteError(w, http.StatusMethodNotAllowed, "Invalid Method", "Method Not Allowed")
+		return
 	}
 
 	materials, err := h.service.GetAllMaterial(context.Background())
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err.Error(), "Internal Server Error")
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -53,6 +54,7 @@ func (h *MaterialHandler) CreateMaterial(w http.ResponseWriter, r *http.Request)
 	err := json.NewDecoder(r.Body).Decode(&material)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "create material failed", "Invalid request body")
+		return
 	}
 
 	if userValidationErr := materialValidate.ValidateMaterial(material.Name); len(userValidationErr) > 0 {
@@ -61,7 +63,6 @@ func (h *MaterialHandler) CreateMaterial(w http.ResponseWriter, r *http.Request)
 	}
 
 	createdMaterial, err := h.service.CreateMaterial(context.Background(), material)
-	log.Println("server error", err)
 
 	if err != nil {
 		if err.Error() == "material name already exists" {
@@ -104,7 +105,6 @@ func (h *MaterialHandler) UpdateMaterial(w http.ResponseWriter, r *http.Request)
 	IDstr := chi.URLParam(r, "id")
 
 	updated, err := h.service.UpdateMaterial(context.Background(), IDstr, material)
-	log.Println("ERR :: ", err)
 	if err != nil {
 		if err.Error() == "material name already exists" || err.Error() == "requested material did not exist" {
 			utils.WriteError(w, http.StatusConflict, err.Error(), "material update failed")

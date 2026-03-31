@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	authLoginService "go-minimal/internal/modules/auth/service"
 	"go-minimal/internal/utils"
-	"log"
 	"net/http"
 )
 
@@ -45,13 +44,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := h.service.Login(input.Email, input.Password)
-	log.Println("LOGIN ERR ::: ", err)
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "Login Failed", "Invalid Credentials")
 		return
 	}
 
-	log.Println("USER DATA ::: ", input.Email, input.Password, user.RoleID)
 	token, err := utils.GenerateToken(user.ID, user.RoleID)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "Token generation failed", err.Error())
