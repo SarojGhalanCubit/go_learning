@@ -1,0 +1,2 @@
+ALTER TABLE sizes
+DROP CONSTRAINT IF EXISTS unique_size_name; 
