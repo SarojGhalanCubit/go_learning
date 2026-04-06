@@ -30,7 +30,7 @@ func NewSizeRepository(db *pgx.Conn) *SizeRepository {
 
 func (r *SizeRepository) GetAllSizes(ctx context.Context) ([]sizeModel.Sizes, error) {
 	var sizes []sizeModel.Sizes
-	query := `SELECT id, name, sort_order,created_at FROM sizes`
+	query := `SELECT id, name, sort_order,created_at FROM sizes WHERE deleted_at IS NULL`
 
 	queryRows, err := r.db.Query(ctx, query)
 	if err != nil {
@@ -92,7 +92,7 @@ func (r *SizeRepository) CreateSize(ctx context.Context, size sizeModel.CreateSi
 func (r *SizeRepository) UpdateSize(ctx context.Context, sizeID string, size sizeModel.CreateSize) (sizeModel.Sizes, error) {
 	var updated sizeModel.Sizes
 
-	query := `UPDATE sizes SET name = $1,sort_order = $2 WHERE id = $3 RETURNING id, name, sort_order, created_at `
+	query := `UPDATE sizes SET name = $1,sort_order = $2 WHERE id = $3 AND deleted_at is NULL RETURNING id, name, sort_order, created_at `
 
 	queryErr := r.db.QueryRow(ctx, query, size.Name, size.SortOrder, sizeID).Scan(&updated.ID, &updated.Name, &updated.SortOrder, &updated.CreatedAt)
 
@@ -107,7 +107,7 @@ func (r *SizeRepository) UpdateSize(ctx context.Context, sizeID string, size siz
 func (r *SizeRepository) FindBySizeID(ctx context.Context, sizeID string) (sizeModel.Sizes, error) {
 	var size sizeModel.Sizes
 
-	query := `SELECT id, name, sort_order, created_at FROM sizes WHERE id = $1`
+	query := `SELECT id, name, sort_order, created_at FROM sizes WHERE id = $1 AND deleted_at IS NULL `
 
 	err := r.db.QueryRow(ctx, query, sizeID).Scan(&size.ID, &size.Name, &size.SortOrder, &size.CreatedAt)
 
@@ -121,7 +121,7 @@ func (r *SizeRepository) DeleteSizeByID(ctx context.Context, sizeID string) (siz
 
 	var deletedSize sizeModel.Sizes
 
-	query := `DELETE FROM sizes WHERE ID = $1 RETURNING id,name, sort_order, created_at`
+	query := `UPDATE sizes SET deleted_at = NOW() WHERE ID = $1 RETURNING id,name, sort_order, created_at`
 
 	err := r.db.QueryRow(ctx, query, sizeID).Scan(&deletedSize.ID, &deletedSize.Name, &deletedSize.SortOrder, &deletedSize.CreatedAt)
 
@@ -136,7 +136,7 @@ func (r *SizeRepository) DeleteSizeByID(ctx context.Context, sizeID string) (siz
 func (r *SizeRepository) GetSizeByID(ctx context.Context, sizeID string) (sizeModel.Sizes, error) {
 	var size sizeModel.Sizes
 
-	query := `SELECT id, name, sort_order, created_at  FROM sizes WHERE id=$1`
+	query := `SELECT id, name, sort_order, created_at  FROM sizes WHERE id=$1 AND deleted_at IS NULL`
 
 	err := r.db.QueryRow(ctx, query, sizeID).Scan(&size.ID, &size.Name, &size.SortOrder, &size.CreatedAt)
 

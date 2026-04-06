@@ -44,7 +44,7 @@ func NewMaterialRepository(db *pgx.Conn) *MaterialRepository {
 }
 
 func (r *MaterialRepository) GetAllMaterial(ctx context.Context) ([]materialsModel.Material, error) {
-	query := `SELECT id, name, is_active,created_at, updated_at FROM materials`
+	query := `SELECT id, name, is_active,created_at, updated_at FROM materials WHERE deleted_at IS NULL `
 
 	materialsRows, err := r.db.Query(ctx, query)
 	if err != nil {
@@ -111,7 +111,7 @@ func (r *MaterialRepository) CreateMaterial(ctx context.Context, material materi
 func (r *MaterialRepository) FindByMaterialID(ctx context.Context, materialID string) (materialsModel.Material, error) {
 	var material materialsModel.Material
 
-	findByMaterialQuery := `SELECT id, name, is_active, created_at, updated_at FROM materials WHERE id = $1`
+	findByMaterialQuery := `SELECT id, name, is_active, created_at, updated_at FROM materials WHERE id = $1 AND deleted_at IS NULL`
 
 	err := r.db.QueryRow(ctx, findByMaterialQuery, materialID).Scan(&material.ID, &material.Name, &material.IsActive, &material.CreatedAt, &material.UpdatedAt)
 
@@ -127,7 +127,7 @@ func (r *MaterialRepository) UpdateMaterial(ctx context.Context, materialID stri
 
 	// check if material name already exits
 	var existingMaterialID int
-	nameCheckQuery := `SELECT id from materials WHERE name = $1 AND id != $2`
+	nameCheckQuery := `SELECT id from materials WHERE name = $1 AND id != $2 AND deleted_at IS NULL `
 
 	checkNameErr := r.db.QueryRow(ctx, nameCheckQuery, material.Name, materialID).Scan(&existingMaterialID)
 
@@ -165,7 +165,7 @@ func (r *MaterialRepository) DeleteMaterialById(ctx context.Context, materialID 
 
 	var deletedMaterial materialsModel.Material
 
-	deleteMaterialQuery := `DELETE FROM materials WHERE ID = $1 RETURNING id,name, is_active, created_at,updated_at`
+	deleteMaterialQuery := `UPDATE materials SET deleted_at = NOW() WHERE ID = $1 AND deleted_at IS NULL RETURNING id,name, is_active, created_at,updated_at`
 
 	err := r.db.QueryRow(ctx, deleteMaterialQuery, materialID).Scan(&deletedMaterial.ID, &deletedMaterial.Name, &deletedMaterial.IsActive, &deletedMaterial.CreatedAt, &deletedMaterial.UpdatedAt)
 
@@ -180,7 +180,7 @@ func (r *MaterialRepository) DeleteMaterialById(ctx context.Context, materialID 
 func (r *MaterialRepository) GeyByMaterialID(ctx context.Context, materialID string) (materialsModel.Material, error) {
 	var material materialsModel.Material
 
-	query := `SELECT id, name, is_active, created_at, updated_at FROM materials WHERE id=$1`
+	query := `SELECT id, name, is_active, created_at, updated_at FROM materials WHERE id=$1 AND deleted_at IS NULL`
 
 	err := r.db.QueryRow(ctx, query, materialID).Scan(&material.ID, &material.Name, &material.IsActive, &material.CreatedAt, &material.UpdatedAt)
 

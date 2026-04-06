@@ -76,7 +76,6 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	user.RoleID = roleIdInt
 
 	created, err := h.service.CreateUser(user)
-	log.Println("Error ::: ", err)
 	if err != nil {
 		if err.Error() == "email already exists" || err.Error() == "phone already exists" {
 			utils.WriteError(w, http.StatusConflict, err.Error(), "User creation failed")
@@ -165,9 +164,8 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updated, err := h.service.UpdateUser(id, user)
-	log.Println("UPDATE ERR ::: ", err)
 	if err != nil {
-		if err.Error() == "email already exists" || err.Error() == "phone already exists" {
+		if err.Error() == "email already exists" || err.Error() == "phone already exists" || err.Error() == "user not found" {
 			utils.WriteError(w, http.StatusConflict, err.Error(), "User update failed")
 			return
 		}
@@ -176,7 +174,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 			w,
 			http.StatusInternalServerError,
 			"Internal server error",
-			nil,
+			err.Error(),
 		)
 
 		return

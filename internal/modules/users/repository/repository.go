@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"go-minimal/internal/modules/users/model"
+	"log"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -45,7 +46,7 @@ func NewUserRepository(db *pgx.Conn) *UserRepository {
 func (r *UserRepository) GetAll() ([]model.UserResponse, error) {
 
 	rows, err := r.db.Query(context.Background(),
-		"SELECT id, name, age, email, phone_number, role_id, created_at,updated_at FROM users")
+		"SELECT id, name, age, email, phone_number, role_id, created_at,updated_at FROM users WHERE deleted_at IS NULL")
 
 	if err != nil {
 		return nil, err
@@ -132,7 +133,7 @@ func (r *UserRepository) Create(user model.User) (model.UserResponse, error) {
 func (r *UserRepository) FindByEmail(email string) (model.User, error) {
 	var user model.User
 
-	query := `SELECT id,name,email,password,role_id,created_at,updated_at FROM users WHERE email=$1`
+	query := `SELECT id,name,email,password,role_id,created_at,updated_at FROM users WHERE email=$1 AND deleted_at IS NULL`
 
 	err := r.db.QueryRow(context.Background(), query, email).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.RoleID, &user.CreatedAt, &user.UpdatedAt)
 
@@ -144,7 +145,7 @@ func (r *UserRepository) FindByEmail(email string) (model.User, error) {
 
 func (r *UserRepository) FindByUserID(userID int) (model.UserResponse, error) {
 	var user model.UserResponse
-	query := `SELECT id,name,email,password,role_id,created_at,updated_at FROM users WHERE id=$1`
+	query := `SELECT id,name,email,password,role_id,created_at,updated_at FROM users WHERE id=$1 AND deleted_at IS NULL`
 
 	err := r.db.QueryRow(context.Background(), query, userID).Scan(&user.ID, &user.Name, &user.Email, &user.Phone, &user.RoleID, &user.CreatedAt, &user.UpdatedAt)
 
@@ -157,12 +158,12 @@ func (r *UserRepository) FindByUserID(userID int) (model.UserResponse, error) {
 func (r *UserRepository) GetUserById(userID int) (model.UserResponse, error) {
 	var user model.UserResponse
 
-	query := `SELECT id,name,age,email,phone_number,role_id,created_at , updated_at FROM users WHERE id=$1`
+	query := `SELECT id,name,age,email,phone_number,role_id,created_at , updated_at FROM users WHERE id=$1 AND deleted_at IS NULL`
 
 	err := r.db.QueryRow(context.Background(), query, userID).Scan(&user.ID, &user.Name, &user.Age, &user.Email, &user.Phone, &user.RoleID, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
-		return model.UserResponse{}, errors.New("User not found")
+		return model.UserResponse{}, errors.New("user not found")
 	}
 
 	return user, nil
@@ -174,7 +175,7 @@ func (r *UserRepository) UpdateUser(userID int, user model.UserResponse) (model.
 
 	// Check if email is already exits
 	var exitingEmailID int
-	emailCheckQuery := `SELECT id from users WHERE email = $1 AND id != $2`
+	emailCheckQuery := `SELECT id from users WHERE email = $1 AND id != $2 AND deleted_at IS NULL`
 	checkEmailErr := r.db.QueryRow(context.Background(), emailCheckQuery, user.Email, userID).Scan(&exitingEmailID)
 
 	if checkEmailErr == nil {
@@ -184,7 +185,7 @@ func (r *UserRepository) UpdateUser(userID int, user model.UserResponse) (model.
 
 	// Check if phone number already exits
 	var existingPhoneId int
-	phoneCheckQuery := `SELECT id from users where phone_number = $1 AND id != $2`
+	phoneCheckQuery := `SELECT id from users where phone_number = $1 AND id != $2 AND deleted_at IS NULL`
 	checkPhoneErr := r.db.QueryRow(context.Background(), phoneCheckQuery, user.Phone, userID).Scan(&existingPhoneId)
 
 	if checkPhoneErr == nil {
@@ -194,10 +195,11 @@ func (r *UserRepository) UpdateUser(userID int, user model.UserResponse) (model.
 	query := `
 		UPDATE users 
 		SET name = $1, age = $2, email = $3, phone_number = $4,role_id = $5
-		WHERE id = $6
+		WHERE id = $6 AND deleted_at IS NULL
 		RETURNING id,name,age,email,phone_number,role_id,created_at, updated_at
 	`
 	updateUserQueryErr := r.db.QueryRow(context.Background(), query, user.Name, user.Age, user.Email, user.Phone, user.RoleID, userID).Scan(&updated.ID, &updated.Name, &updated.Age, &updated.Email, &updated.Phone, &updated.RoleID, &updated.CreatedAt, &updated.UpdatedAt)
+	log.Println("ERR :: ", updateUserQueryErr)
 
 	if updateUserQueryErr != nil {
 		if pgErr, ok := updateUserQueryErr.(*pgconn.PgError); ok {
@@ -215,7 +217,7 @@ func (r *UserRepository) UpdateUser(userID int, user model.UserResponse) (model.
 				return updated, errors.New("missing required field")
 			}
 		}
-		return updated, updateUserQueryErr
+		return updated, errors.New("user not found")
 	}
 
 	return updated, nil
@@ -225,7 +227,7 @@ func (r *UserRepository) DeleteUser(userID int) (model.UserResponse, error) {
 
 	var deletedUser model.UserResponse
 
-	deleteUserQuery := ` DELETE FROM users WHERE id = $1 RETURNING id, name, age, email, phone_number, role_id,created_at, updated_at
+	deleteUserQuery := `UPDATE users SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id, name, age, email, phone_number, role_id,created_at, updated_at
     `
 	deleteUserQueryErr := r.db.QueryRow(context.Background(), deleteUserQuery, userID).Scan(&deletedUser.ID, &deletedUser.Name,
 		&deletedUser.Age,

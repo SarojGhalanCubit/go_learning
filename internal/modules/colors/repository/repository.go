@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	colorModel "go-minimal/internal/modules/colors/model"
+	"log"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -29,7 +30,7 @@ func NewColorsRepository(db *pgx.Conn) *ColorsRepository {
 func (r *ColorsRepository) GetAllColors(ctx context.Context) ([]colorModel.Colors, error) {
 	var colors []colorModel.Colors
 
-	query := `SELECT id,name, hex_code, created_at FROM colors`
+	query := `SELECT id,name, hex_code, created_at FROM colors WHERE deleted_at IS NULL `
 
 	colorsRows, err := r.db.Query(ctx, query)
 	if err != nil {
@@ -89,7 +90,7 @@ func (r *ColorsRepository) CreateColor(ctx context.Context, color colorModel.Cre
 func (r *ColorsRepository) FIndByColorID(ctx context.Context, colorID string) (colorModel.Colors, error) {
 	var color colorModel.Colors
 
-	query := `SELECT id, name, hex_code, created_at  FROM colors WHERE id = $1`
+	query := `SELECT id, name, hex_code, created_at  FROM colors WHERE id = $1 AND deleted_at IS NULL`
 
 	err := r.db.QueryRow(ctx, query, colorID).Scan(&color.ID, &color.Name, &color.HexCode, &color.CreatedAt)
 
@@ -102,7 +103,7 @@ func (r *ColorsRepository) FIndByColorID(ctx context.Context, colorID string) (c
 func (r *ColorsRepository) GetByColorID(ctx context.Context, colorID string) (colorModel.Colors, error) {
 	var color colorModel.Colors
 
-	query := `SELECT id, name,  hex_code,created_at  FROM colors WHERE id=$1`
+	query := `SELECT id, name,  hex_code,created_at  FROM colors WHERE id=$1 AND deleted_at IS NULL `
 
 	err := r.db.QueryRow(ctx, query, colorID).Scan(&color.ID, &color.Name, &color.HexCode, &color.CreatedAt)
 
@@ -116,7 +117,7 @@ func (r *ColorsRepository) GetByColorID(ctx context.Context, colorID string) (co
 func (r *ColorsRepository) UpdateColor(ctx context.Context, colorID string, color colorModel.CreateColor) (colorModel.Colors, error) {
 
 	var updated colorModel.Colors
-	updateColorQuery := `UPDATE colors SET name = $1,hex_code = $2 WHERE id = $3 RETURNING id, name, hex_code, created_at `
+	updateColorQuery := `UPDATE colors SET name = $1,hex_code = $2 WHERE id = $3 AND deleted_at IS NULL RETURNING id, name, hex_code, created_at `
 	updateColorQueryErr := r.db.QueryRow(ctx, updateColorQuery, color.Name, color.HexCode, colorID).Scan(&updated.ID, &updated.Name, &updated.HexCode, &updated.CreatedAt)
 	if updateColorQueryErr != nil {
 		return updated, updateColorQueryErr
@@ -128,9 +129,10 @@ func (r *ColorsRepository) UpdateColor(ctx context.Context, colorID string, colo
 func (r *ColorsRepository) DeleteByColorID(ctx context.Context, colorID string) (colorModel.Colors, error) {
 
 	var deletedColors colorModel.Colors
-	query := `DELETE FROM  colors WHERE ID = $1 RETURNING id,name, hex_code, created_at `
+	query := `UPDATE colors SET deleted_at = NOW() WHERE ID = $1 AND deleted_at IS NULL RETURNING id,name, hex_code, created_at `
 
 	err := r.db.QueryRow(ctx, query, colorID).Scan(&deletedColors.ID, &deletedColors.Name, &deletedColors.HexCode, &deletedColors.CreatedAt)
+	log.Println("DELETE ERR :: ", err)
 
 	if err != nil {
 		return deletedColors, errors.New("failed to delete colors")

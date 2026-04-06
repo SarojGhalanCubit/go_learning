@@ -32,7 +32,7 @@ func NewCategoriesRepo(db *pgx.Conn) *CategoriesRepo {
 
 func (r *CategoriesRepo) GetAllCategories(ctx context.Context) ([]categoryModel.Categories, error) {
 	var categories []categoryModel.Categories
-	query := `SELECT id, name, is_active, slug,created_at, updated_at FROM categories`
+	query := `SELECT id, name, is_active, slug,created_at, updated_at FROM categories WHERE deleted_at IS NULL`
 
 	queryRows, err := r.db.Query(ctx, query)
 	if err != nil {
@@ -56,12 +56,12 @@ func (r *CategoriesRepo) GetAllCategories(ctx context.Context) ([]categoryModel.
 func (r *CategoriesRepo) FindByCategoryID(ctx context.Context, categoryID string) (categoryModel.Categories, error) {
 	var category categoryModel.Categories
 
-	findByMaterialQuery := `SELECT id, name, is_active, slug, created_at, updated_at FROM categories WHERE id = $1`
+	findByMaterialQuery := `SELECT id, name, is_active, slug, created_at, updated_at FROM categories WHERE id = $1 AND deleted_at IS NULL`
 
 	err := r.db.QueryRow(ctx, findByMaterialQuery, categoryID).Scan(&category.ID, &category.Name, &category.IsActive, &category.Slug, &category.CreatedAt, &category.UpdatedAt)
 
 	if err != nil {
-		return categoryModel.Categories{}, errors.New("requested  category did not exist")
+		return categoryModel.Categories{}, errors.New("requested category did not exist")
 	}
 	return category, nil
 }
@@ -107,7 +107,7 @@ func (r *CategoriesRepo) UpdateCategory(ctx context.Context, categoryID string, 
 
 	// check if material name already exits
 	var existingCategoryID int
-	nameCheckQuery := `SELECT id from categories WHERE name = $1 AND id != $2`
+	nameCheckQuery := `SELECT id from categories WHERE name = $1 AND id != $2 AND deleted_at IS NULL`
 
 	checkNameErr := r.db.QueryRow(ctx, nameCheckQuery, category.Name, categoryID).Scan(&existingCategoryID)
 
@@ -147,9 +147,11 @@ func (r *CategoriesRepo) DeleteCategoryById(ctx context.Context, categoryID stri
 
 	var deletedCategory categoryModel.Categories
 
-	deleteCategoryQuery := `DELETE FROM categories WHERE ID = $1 RETURNING id,name, is_active,slug, created_at,updated_at`
+	deleteCategoryQuery := `UPDATE categories SET deleted_at = NOW() WHERE ID = $1 AND deleted_at IS NULL RETURNING id,name, is_active,slug, created_at,updated_at`
 
 	err := r.db.QueryRow(ctx, deleteCategoryQuery, categoryID).Scan(&deletedCategory.ID, &deletedCategory.Name, &deletedCategory.IsActive, &deletedCategory.Slug, &deletedCategory.CreatedAt, &deletedCategory.UpdatedAt)
+
+	log.Println("ERROR DELETE ", err)
 
 	if err != nil {
 		return deletedCategory, errors.New("failed to delete category")

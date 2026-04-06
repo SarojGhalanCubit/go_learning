@@ -6,6 +6,7 @@ import (
 	categoryModel "go-minimal/internal/modules/categories/model"
 	categoriesRepo "go-minimal/internal/modules/categories/repository"
 	"go-minimal/internal/utils"
+	"log"
 )
 
 type CategoriesService struct {
@@ -35,12 +36,24 @@ func (s *CategoriesService) UpdateCategory(ctx context.Context, categoryID strin
 	if err != nil {
 		return categoryModel.Categories{}, err
 	}
-	category.Slug = categoryFinded.Slug
+	if category.Name != categoryFinded.Name {
+		uniqueSlug, err := utils.GenerateUniqueSlug(category.Name)
+		if err != nil {
+			return categoryModel.Categories{}, fmt.Errorf("failed to generate slug: %w", err)
+		}
+
+		category.Slug = uniqueSlug
+
+	} else {
+		category.Slug = categoryFinded.Slug
+	}
 	return s.repo.UpdateCategory(ctx, categoryFinded.ID.String(), category)
 }
 
 func (s *CategoriesService) DeleteCategoryById(ctx context.Context, categoryID string) (categoryModel.Categories, error) {
 	categoryFinded, err := s.repo.FindByCategoryID(ctx, categoryID)
+
+	log.Println("DELETE ERR :: ", err)
 
 	if err != nil {
 		return categoryModel.Categories{}, err
