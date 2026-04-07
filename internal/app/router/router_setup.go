@@ -5,7 +5,8 @@ import (
 	authRoute "go-minimal/internal/modules/auth/routes"
 	categoriesRoute "go-minimal/internal/modules/categories/routes"
 	colorRoute "go-minimal/internal/modules/colors/routes"
-	materials "go-minimal/internal/modules/materials/routes"
+	materialsRoute "go-minimal/internal/modules/materials/routes"
+	productsRoute "go-minimal/internal/modules/products/routes"
 	sizeRoutes "go-minimal/internal/modules/sizes/routes"
 	usersRoute "go-minimal/internal/modules/users/routes"
 	"net/http"
@@ -26,7 +27,7 @@ func NewRouter(a *app.App) *Router {
 	})
 
 	r.Route("/api/v1/materials", func(r chi.Router) {
-		materials.RegisterRoutes(r, a.MaterialHandler)
+		materialsRoute.RegisterRoutes(r, a.MaterialHandler)
 	})
 
 	r.Route("/api/v1/users", func(r chi.Router) {
@@ -45,6 +46,9 @@ func NewRouter(a *app.App) *Router {
 		categoriesRoute.RegisterRoutes(r, a.CategoriesHandler)
 	})
 
+	r.Route("/api/v1/products", func(r chi.Router) {
+		productsRoute.RegisterRoutes(r, a.ProductsHandler)
+	})
 	return &Router{mux: r}
 }
 

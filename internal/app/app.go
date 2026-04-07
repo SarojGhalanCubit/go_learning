@@ -5,6 +5,7 @@ import (
 	categoriesHandler "go-minimal/internal/modules/categories/handler"
 	colorHandler "go-minimal/internal/modules/colors/handler"
 	"go-minimal/internal/modules/materials/handler"
+	productHandler "go-minimal/internal/modules/products/handler"
 	sizeHandler "go-minimal/internal/modules/sizes/handler"
 	userHandler "go-minimal/internal/modules/users/handler"
 
@@ -18,6 +19,7 @@ type App struct {
 	ColorHandler      *colorHandler.ColorHandler
 	SizeHandler       *sizeHandler.SizeHandler
 	CategoriesHandler *categoriesHandler.CategoriesHandler
+	ProductsHandler   *productHandler.ProductHandler
 }
 
 func NewApp(db *pgx.Conn) *App {
@@ -28,5 +30,6 @@ func NewApp(db *pgx.Conn) *App {
 	a.initColors(db)
 	a.intiSizes(db)
 	a.initCategories(db)
+	a.initProducts(db)
 	return a
 }
