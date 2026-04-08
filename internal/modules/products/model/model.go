@@ -4,7 +4,7 @@ import "github.com/google/uuid"
 
 type ProductResponse struct {
 	ID           uuid.UUID `json:"id"`
-	Name         string    `json:"string"`
+	Name         string    `json:"name"`
 	Slug         string    `json:"slug"`
 	Description  string    `json:"description"`
 	Quantity     int       `json:"quantity"`
