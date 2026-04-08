@@ -15,6 +15,10 @@ func RegisterRoutes(r chi.Router, h *productHandler.ProductHandler) {
 		r.Use(middleware.RequireRole(constants.AdminID, constants.ManagerID))
 
 		r.Get("/getAll", h.GetAllProducts)
-		r.Get("/create", h.CreateProduct)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RequireRole(constants.AdminID))
+		r.Post("/create", h.CreateProduct)
+		r.Put("/{id}/update", h.UpdateProductByID)
 	})
 }
