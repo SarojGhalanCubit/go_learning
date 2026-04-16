@@ -9,7 +9,6 @@ import (
 	productModel "go-minimal/internal/modules/products/model"
 	productRepo "go-minimal/internal/modules/products/repository"
 	"go-minimal/internal/utils"
-	"log"
 	"strings"
 )
 
@@ -87,8 +86,21 @@ func (s *ProductService) UpdateProductByID(ctx context.Context, product productM
 	} else {
 		product.Slug = productFinded.Slug
 	}
-	log.Println("product slug :: ", product)
 
 	return s.repo.UpdateProductByID(ctx, product, productFinded.ID.String())
 
+}
+
+func (s *ProductService) GetbyID(productID string, ctx context.Context) (productModel.ProductResponse, error) {
+	return s.repo.GetByID(ctx, productID)
+}
+
+func (s *ProductService) DeleteProductByID(ctx context.Context, productID string) (productModel.ProductResponse, error) {
+	productFinded, err := s.repo.GetByID(ctx, productID)
+
+	if err != nil {
+		return productModel.ProductResponse{}, errors.New("invalid product: product does not exist")
+	}
+
+	return s.repo.DeleteProductByID(ctx, productFinded.ID.String())
 }
