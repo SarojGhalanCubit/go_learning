@@ -3,11 +3,9 @@ package colorsRepository
 import (
 	"context"
 	"errors"
-	colorModel "go-minimal/internal/modules/colors/model"
-	"log"
-
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	colorModel "go-minimal/internal/modules/colors/model"
 )
 
 type ColorsRepositoryI interface {
@@ -132,7 +130,6 @@ func (r *ColorsRepository) DeleteByColorID(ctx context.Context, colorID string) 
 	query := `UPDATE colors SET deleted_at = NOW() WHERE ID = $1 AND deleted_at IS NULL RETURNING id,name, hex_code, created_at `
 
 	err := r.db.QueryRow(ctx, query, colorID).Scan(&deletedColors.ID, &deletedColors.Name, &deletedColors.HexCode, &deletedColors.CreatedAt)
-	log.Println("DELETE ERR :: ", err)
 
 	if err != nil {
 		return deletedColors, errors.New("failed to delete colors")
