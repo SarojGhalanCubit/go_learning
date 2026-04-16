@@ -9,6 +9,7 @@ import (
 	productsRoute "go-minimal/internal/modules/products/routes"
 	sizeRoutes "go-minimal/internal/modules/sizes/routes"
 	usersRoute "go-minimal/internal/modules/users/routes"
+	"go-minimal/internal/utils"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -21,6 +22,15 @@ type Router struct {
 func NewRouter(a *app.App) *Router {
 	r := chi.NewRouter()
 	registerMiddleware(r)
+
+	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+		utils.WriteError(
+			w,
+			http.StatusMethodNotAllowed,
+			"invalid request",
+			"method not allowed",
+		)
+	})
 
 	r.Route("/api/v1/login", func(r chi.Router) {
 		authRoute.RegisterRoutes(r, a.AuthHandler)
