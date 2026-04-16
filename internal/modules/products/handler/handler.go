@@ -100,3 +100,48 @@ func (h *ProductHandler) UpdateProductByID(w http.ResponseWriter, r *http.Reques
 	utils.WriteSuccess(w, http.StatusCreated, "Product updated successfully", product)
 
 }
+
+func (handler *ProductHandler) GetProductByID(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodGet {
+		utils.WriteError(w, http.StatusMethodNotAllowed, "invalid request", "method not sdfasdfs alowed")
+		return
+	}
+
+	IDStr := chi.URLParam(r, "id")
+
+	product, err := handler.svc.GetbyID(IDStr, r.Context())
+
+	if err != nil {
+
+		if err.Error() == "product not found" {
+			utils.WriteError(w, http.StatusNotFound, err.Error(), "product creation failed")
+			return
+		}
+
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to create product", err.Error())
+		return
+	}
+
+	utils.WriteSuccess(w, http.StatusOK, "product fetched successfully.", product)
+}
+
+func (h *ProductHandler) DeleteProductByID(w http.ResponseWriter, r *http.Request) {
+
+	IDstr := chi.URLParam(r, "id")
+
+	product, err := h.svc.DeleteProductByID(r.Context(), IDstr)
+
+	if err != nil {
+		if err.Error() == "product not found" {
+			utils.WriteError(w, http.StatusNotFound, err.Error(), "product deletion failed")
+			return
+		}
+
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to delete product", err.Error())
+		return
+	}
+
+	utils.WriteSuccess(w, http.StatusOK, "product deleted successfully", product)
+
+}
