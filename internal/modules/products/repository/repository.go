@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	productModel "go-minimal/internal/modules/products/model"
+	"log"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -13,6 +14,7 @@ type ProductRepoI interface {
 	GetAllProducts(ctx context.Context) ([]productModel.ProductResponse, error)
 	CreateProduct(ctx context.Context, product productModel.CreateProduct) (productModel.ProductResponse, error)
 	GetByID(ctx context.Context, productID string) (productModel.ProductResponse, error)
+	DeleteProductByID(ctx context.Context, productID string) (productModel.ProductResponse, error)
 	UpdateProductByID(ctx context.Context, product productModel.CreateProduct, productID string) (productModel.ProductResponse, error)
 }
 
@@ -130,4 +132,30 @@ func (r *ProductRepo) GetByID(ctx context.Context, productID string) (productMod
 		return p, errors.New("product not found")
 	}
 	return p, nil
+}
+
+func (r *ProductRepo) DeleteProductByID(ctx context.Context, productID string) (productModel.ProductResponse, error) {
+	var deletedProduct productModel.ProductResponse
+
+	query := `UPDATE products SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id,name`
+
+	err := r.db.QueryRow(ctx, query, productID).Scan(&deletedProduct.ID, &deletedProduct.Name)
+	if err != nil {
+		return deletedProduct, errors.New("failed to delete product")
+	}
+
+	returnQuery := `
+		SELECT p.id, p.name, p.slug, p.description, p.quantity, p.is_active, c.name, m.name 
+		FROM products p 
+		JOIN categories c ON p.category_id = c.id 
+		JOIN materials m ON p.material_id = m.id 
+		WHERE p.id = $1`
+
+	returnQueryErr := r.db.QueryRow(ctx, returnQuery, productID).Scan(&deletedProduct.ID, &deletedProduct.Name, &deletedProduct.Slug, &deletedProduct.Description, &deletedProduct.Quantity, &deletedProduct.IsActive, &deletedProduct.CategoryName, &deletedProduct.MaterialName)
+	log.Println("second err :: ", returnQueryErr)
+	if returnQueryErr != nil {
+		return deletedProduct, errors.New("product not found")
+	}
+
+	return deletedProduct, nil
 }
